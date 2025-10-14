@@ -1,0 +1,5 @@
+{
+  "name": "Computer Rental System",
+  "description": "A web application for managing computer and notebook rentals. Admins can manage inventory and users, while users can browse and book available equipment. The system features a shared booking calendar for tracking all rentals.",
+  "requestFramePermissions": []
+}
