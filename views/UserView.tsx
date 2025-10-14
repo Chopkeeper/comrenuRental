@@ -11,7 +11,7 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
     const [endDate, setEndDate] = useState('');
     const [error, setError] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!currentUser) {
             setError('You must be logged in to book a computer.');
@@ -28,8 +28,10 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
             setError('End date must be after start date.');
             return;
         }
+        
+        setError('');
 
-        const success = addBooking({
+        const success = await addBooking({
             computerId: computer.id,
             userId: currentUser.id,
             startDate: start,

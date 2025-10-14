@@ -1,14 +1,66 @@
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import type { User, Computer, Booking } from '../types/types';
 
+// Initial data for demonstration purposes
+const initialUsers: User[] = [
+    { id: 'user-1', name: 'Admin', role: 'admin' },
+    { id: 'user-2', name: 'Alice', role: 'user' },
+    { id: 'user-3', name: 'Bob', role: 'user' },
+];
+
+const initialComputers: Computer[] = [
+    {
+        id: 'comp-1',
+        assetNumber: 'LT-MBP16-001',
+        name: 'MacBook Pro 16"',
+        imageUrl: 'https://picsum.photos/seed/LT-MBP16-001/400/300',
+        purchaseYear: 2023,
+        description: 'Powerful laptop for creative professionals. Features the M2 Pro chip for exceptional performance.',
+    },
+    {
+        id: 'comp-2',
+        assetNumber: 'LT-DLLXP-002',
+        name: 'Dell XPS 15',
+        imageUrl: 'https://picsum.photos/seed/LT-DLLXP-002/400/300',
+        purchaseYear: 2022,
+        description: 'A sleek and powerful Windows laptop with a stunning OLED display, ideal for both work and play.',
+    },
+    {
+        id: 'comp-3',
+        assetNumber: 'LT-THNKPD-003',
+        name: 'Lenovo ThinkPad X1',
+        imageUrl: 'https://picsum.photos/seed/LT-THNKPD-003/400/300',
+        purchaseYear: 2023,
+        description: 'Known for its durability and excellent keyboard, the ThinkPad is a reliable business companion.',
+    },
+];
+
+const initialBookings: Booking[] = [
+    {
+        id: 'booking-1',
+        computerId: 'comp-1',
+        userId: 'user-2',
+        startDate: new Date(new Date().setDate(new Date().getDate() + 2)),
+        endDate: new Date(new Date().setDate(new Date().getDate() + 5)),
+    },
+    {
+        id: 'booking-2',
+        computerId: 'comp-3',
+        userId: 'user-3',
+        startDate: new Date(new Date().setDate(new Date().getDate() - 1)),
+        endDate: new Date(new Date().setDate(new Date().getDate() + 1)),
+    },
+];
+
+
 interface AppContextType {
     users: User[];
     computers: Computer[];
     bookings: Booking[];
     currentUser: User | null;
-    addUser: (name: string) => void;
-    addComputer: (computer: Omit<Computer, 'id'>) => void;
-    addBooking: (booking: Omit<Booking, 'id'>) => boolean;
+    addUser: (name: string) => Promise<void>;
+    addComputer: (computer: Omit<Computer, 'id'>) => Promise<void>;
+    addBooking: (booking: Omit<Booking, 'id'>) => Promise<boolean>;
     setCurrentUser: (user: User) => void;
     findComputerById: (id: string) => Computer | undefined;
     findUserById: (id: string) => User | undefined;
@@ -16,80 +68,63 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const initialUsers: User[] = [
-    { id: 'user-1', name: 'Admin Alice', role: 'admin' },
-    { id: 'user-2', name: 'User Bob', role: 'user' },
-];
-
-const initialComputers: Computer[] = [
-    { id: 'comp-1', name: 'Dell XPS 15', assetNumber: 'DXPS15-001', purchaseYear: 2023, imageUrl: 'https://picsum.photos/seed/dxps15/400/300', description: 'Powerful laptop for creative professionals.'},
-    { id: 'comp-2', name: 'MacBook Pro 14', assetNumber: 'MBP14-002', purchaseYear: 2023, imageUrl: 'https://picsum.photos/seed/mbp14/400/300', description: 'Sleek and efficient for all tasks.' },
-    { id: 'comp-3', name: 'Lenovo ThinkPad X1', assetNumber: 'LTPX1-003', purchaseYear: 2022, imageUrl: 'https://picsum.photos/seed/ltpx1/400/300', description: 'A reliable business workhorse.' },
-];
-
-const initialBookings: Booking[] = [
-    { id: 'booking-1', computerId: 'comp-1', userId: 'user-2', startDate: new Date(new Date().setDate(new Date().getDate() + 2)), endDate: new Date(new Date().setDate(new Date().getDate() + 5)) },
-];
-
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [users, setUsers] = useState<User[]>(initialUsers);
     const [computers, setComputers] = useState<Computer[]>(initialComputers);
     const [bookings, setBookings] = useState<Booking[]>(initialBookings);
     const [currentUser, setCurrentUser] = useState<User | null>(initialUsers[0]);
 
-    const addUser = (name: string) => {
+
+    const addUser = async (name: string) => {
         const newUser: User = {
             id: `user-${Date.now()}`,
             name,
-            role: 'user',
+            role: 'user', // New users are always 'user' role
         };
         setUsers(prev => [...prev, newUser]);
     };
 
-    const addComputer = (computer: Omit<Computer, 'id'>) => {
+    const addComputer = async (computer: Omit<Computer, 'id'>) => {
         const newComputer: Computer = {
-            id: `comp-${Date.now()}`,
             ...computer,
+            id: `comp-${Date.now()}`,
         };
         setComputers(prev => [...prev, newComputer]);
     };
 
-    const addBooking = useCallback((booking: Omit<Booking, 'id'>): boolean => {
-        const newStartDate = new Date(booking.startDate);
-        newStartDate.setHours(0, 0, 0, 0);
-        const newEndDate = new Date(booking.endDate);
-        newEndDate.setHours(23, 59, 59, 999);
+    const addBooking = useCallback(async (booking: Omit<Booking, 'id'>): Promise<boolean> => {
+        const newBookingStart = new Date(booking.startDate);
+        newBookingStart.setHours(0,0,0,0);
+        const newBookingEnd = new Date(booking.endDate);
+        newBookingEnd.setHours(0,0,0,0);
 
         const isConflict = bookings.some(b => {
-            if (b.computerId !== booking.computerId) return false;
-            
-            const existingStartDate = new Date(b.startDate);
-            existingStartDate.setHours(0, 0, 0, 0);
-            const existingEndDate = new Date(b.endDate);
-            existingEndDate.setHours(23, 59, 59, 999);
+             if (b.computerId !== booking.computerId) {
+                 return false;
+             }
+             const existingStart = new Date(b.startDate);
+             existingStart.setHours(0,0,0,0);
+             const existingEnd = new Date(b.endDate);
+             existingEnd.setHours(0,0,0,0);
 
-            return (
-                (newStartDate >= existingStartDate && newStartDate <= existingEndDate) ||
-                (newEndDate >= existingStartDate && newEndDate <= existingEndDate) ||
-                (newStartDate <= existingStartDate && newEndDate >= existingEndDate)
-            );
+             // Conflict if the new booking period overlaps with an existing one
+             return newBookingStart <= existingEnd && newBookingEnd >= existingStart;
         });
-
+        
         if (isConflict) {
-            alert('Booking conflict! This computer is already booked for the selected dates.');
             return false;
         }
-
+        
         const newBooking: Booking = {
-            id: `booking-${Date.now()}`,
             ...booking,
+            id: `booking-${Date.now()}`,
         };
         setBookings(prev => [...prev, newBooking]);
         return true;
     }, [bookings]);
 
     const findComputerById = (id: string) => computers.find(c => c.id === id);
-    const findUserById = (id: string) => users.find(u => u.id === id);
+    const findUserById = (id:string) => users.find(u => u.id === id);
 
 
     return (
