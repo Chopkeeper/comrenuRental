@@ -58,25 +58,43 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 
-// Connect to database and seed initial data
+// Connect to database and ensure admin user exists
 connectDB().then(async () => {
     try {
-        const userCount = await User.countDocuments();
-        if (userCount === 0) {
+        // Ensure admin user exists and has a known password
+        const adminName = 'admin';
+        const adminPassword = 'admin123';
+
+        let adminUser = await User.findOne({ name: adminName }).select('+password');
+
+        if (!adminUser) {
+            // If admin doesn't exist, create it. The pre-save hook will hash the password.
             await User.create({
-                name: 'admin',
-                password: 'admin123', // This will be hashed by the pre-save hook
+                name: adminName,
+                password: adminPassword,
                 role: 'admin'
             });
             console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
-            console.log('Database was empty. Default admin user created.');
-            console.log('Username: admin');
-            console.log('Password: admin123');
+            console.log('Default admin user created.');
+            console.log(`Username: ${adminName} | Password: ${adminPassword}`);
             console.log('Please change the password after first login.');
             console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+        } else {
+            // If admin exists, check if the password matches. If not, reset it.
+            const isMatch = await adminUser.matchPassword(adminPassword);
+            if (!isMatch) {
+                adminUser.password = adminPassword; // The pre-save hook will hash this new password
+                await adminUser.save();
+                console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+                console.log('Default admin user password has been RESET.');
+                console.log(`Username: ${adminName} | Password: ${adminPassword}`);
+                console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+            } else {
+                 console.log('Admin user is configured correctly.');
+            }
         }
     } catch (error) {
-        console.error('Error seeding database:', error);
+        console.error('Error during admin user setup:', error);
         process.exit(1);
     }
 });
