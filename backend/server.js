@@ -65,13 +65,13 @@ connectDB().then(async () => {
         if (userCount === 0) {
             await User.create({
                 name: 'admin',
-                password: 'admin', // This will be hashed by the pre-save hook
+                password: 'admin123', // This will be hashed by the pre-save hook
                 role: 'admin'
             });
             console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
             console.log('Database was empty. Default admin user created.');
             console.log('Username: admin');
-            console.log('Password: admin');
+            console.log('Password: admin123');
             console.log('Please change the password after first login.');
             console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
         }
