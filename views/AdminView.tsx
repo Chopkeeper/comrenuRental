@@ -6,7 +6,7 @@ import { UserIcon } from '../components/icons/UserIcon';
 import { ComputerIcon } from '../components/icons/ComputerIcon';
 import { CheckIcon } from '../components/icons/CheckIcon';
 import { XIcon } from '../components/icons/XIcon';
-import type { Computer } from '../types';
+import type { Computer } from '../types/types';
 import { PencilIcon } from '../components/icons/PencilIcon';
 import { TrashIcon } from '../components/icons/TrashIcon';
 import ComputerForm from '../components/ComputerForm';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { generateComputerDescription } from '../services/geminiService';
-import type { Computer } from '../types';
+import type { Computer } from '../types/types';
 
 interface ComputerFormProps {
     onClose: () => void;

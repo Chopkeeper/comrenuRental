@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import type { User, Computer, Booking } from '../types';
+import type { User, Computer, Booking } from '../types/types';
 
 // Helper to parse dates from API responses
 const parseBookings = (bookings: any[]): Booking[] => {

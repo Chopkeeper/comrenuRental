@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.js';
 import computerRoutes from './routes/computers.js';
 import bookingRoutes from './routes/bookings.js';
 import userRoutes from './routes/users.js';
+import aiRoutes from './routes/ai.js';
 import User from './models/User.js';
 
 
@@ -32,6 +33,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/computers', computerRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/ai', aiRoutes);
 
 
 // Serve frontend in production
