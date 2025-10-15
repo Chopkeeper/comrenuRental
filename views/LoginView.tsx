@@ -7,14 +7,17 @@ const LoginView: React.FC = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        const success = login(username, password);
+        setIsLoading(true);
+        const success = await login(username, password);
         if (!success) {
             setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
         }
+        setIsLoading(false);
     };
 
     return (
@@ -40,6 +43,7 @@ const LoginView: React.FC = () => {
                             aria-label="Username"
                             placeholder="เช่น ผู้ดูแลระบบ หรือ อลิซ"
                             required
+                            disabled={isLoading}
                         />
                     </div>
                      <div className="mb-6">
@@ -53,10 +57,15 @@ const LoginView: React.FC = () => {
                             aria-label="Password"
                             placeholder="••••••••"
                             required
+                            disabled={isLoading}
                         />
                     </div>
-                    <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        เข้าสู่ระบบ
+                    <button 
+                        type="submit" 
+                        className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 transition font-semibold focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-400 disabled:cursor-not-allowed"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบ'}
                     </button>
                 </form>
             </div>

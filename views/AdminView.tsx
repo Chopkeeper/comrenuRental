@@ -17,13 +17,18 @@ import { UploadIcon } from '../components/icons/UploadIcon';
 const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const { addUser } = useApp();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (name.trim() && password) {
-            addUser(name.trim(), password);
-            onClose();
+            setIsSubmitting(true);
+            const success = await addUser(name.trim(), password);
+            setIsSubmitting(false);
+            if (success) {
+                onClose();
+            }
         }
     };
 
@@ -39,6 +44,7 @@ const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     onChange={(e) => setName(e.target.value)}
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     required
+                    disabled={isSubmitting}
                 />
             </div>
             <div>
@@ -50,11 +56,14 @@ const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     onChange={(e) => setPassword(e.target.value)}
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     required
+                    disabled={isSubmitting}
                 />
             </div>
             <div className="flex justify-end gap-2">
-                <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">ยกเลิก</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">เพิ่มผู้ใช้</button>
+                <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300" disabled={isSubmitting}>ยกเลิก</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-indigo-400" disabled={isSubmitting}>
+                    {isSubmitting ? 'กำลังเพิ่ม...' : 'เพิ่มผู้ใช้'}
+                </button>
             </div>
         </form>
     );
@@ -78,7 +87,12 @@ const PendingBookings: React.FC = () => {
     };
     
     if (pendingBookings.length === 0) {
-        return null;
+        return (
+             <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg text-center text-slate-500">
+                <h3 className="text-xl font-bold text-slate-800 mb-2">คำขอจองที่รอดำเนินการ</h3>
+                <p>ไม่มีคำขอจองที่รอดำเนินการในขณะนี้</p>
+            </div>
+        );
     }
 
     return (
@@ -138,6 +152,15 @@ const ManageComputers: React.FC = () => {
             deleteComputer(computerId);
         }
     };
+    
+    if (computers.length === 0) {
+        return (
+             <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg text-center text-slate-500">
+                <h3 className="text-xl font-bold text-slate-800 mb-2">จัดการคอมพิวเตอร์</h3>
+                <p>ยังไม่มีคอมพิวเตอร์ในระบบ กรุณาเพิ่มคอมพิวเตอร์</p>
+            </div>
+        );
+    }
 
     return (
         <>
@@ -186,52 +209,14 @@ const ManageComputers: React.FC = () => {
 
 
 const AdminView: React.FC = () => {
-    const { users, computers, bookings, importData } = useApp();
+    const { importData } = useApp();
     const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
     const [isAddComputerModalOpen, setAddComputerModalOpen] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-
-    const handleExport = () => {
-        const dataToExport = {
-            users,
-            computers,
-            bookings,
-        };
-        const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
-            JSON.stringify(dataToExport, null, 2)
-        )}`;
-        const link = document.createElement("a");
-        link.href = jsonString;
-        link.download = "computer-rental-data.json";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    
+    // NOTE: Import/Export is disabled when using a central database.
+    const handleImportExportDisabled = () => {
+        alert("ฟังก์ชันนำเข้า/ส่งออกข้อมูลไม่สามารถใช้งานได้เมื่อเชื่อมต่อกับฐานข้อมูลกลาง");
     };
-
-    const handleImportClick = () => {
-        fileInputRef.current?.click();
-    };
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const text = e.target?.result;
-            if (typeof text === 'string') {
-                if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการนำเข้าข้อมูลนี้? การดำเนินการนี้จะเขียนทับข้อมูลทั้งหมดที่มีอยู่ในเบราว์เซอร์นี้")) {
-                    importData(text);
-                }
-            }
-        };
-        reader.readAsText(file);
-
-        if(event.target) {
-            event.target.value = '';
-        }
-    };
-
 
     return (
         <div className="space-y-6">
@@ -246,21 +231,14 @@ const AdminView: React.FC = () => {
                         <ComputerIcon className="h-5 w-5" />
                         เพิ่มคอมพิวเตอร์
                     </button>
-                     <button onClick={handleImportClick} className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-md shadow hover:bg-slate-700 transition">
+                     <button onClick={handleImportExportDisabled} className="flex items-center gap-2 px-4 py-2 bg-slate-400 text-white rounded-md shadow cursor-not-allowed" title="ฟังก์ชันนี้ถูกปิดใช้งานเมื่อใช้ฐานข้อมูลกลาง">
                         <UploadIcon className="h-5 w-5" />
                         นำเข้าข้อมูล
                     </button>
-                    <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-md shadow hover:bg-slate-700 transition">
+                    <button onClick={handleImportExportDisabled} className="flex items-center gap-2 px-4 py-2 bg-slate-400 text-white rounded-md shadow cursor-not-allowed" title="ฟังก์ชันนี้ถูกปิดใช้งานเมื่อใช้ฐานข้อมูลกลาง">
                         <DownloadIcon className="h-5 w-5" />
                         ส่งออกข้อมูล
                     </button>
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        accept=".json"
-                        className="hidden"
-                    />
                 </div>
             </div>
 
