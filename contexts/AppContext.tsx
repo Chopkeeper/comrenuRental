@@ -13,7 +13,7 @@ const initialComputers: Computer[] = [
         id: 'comp-1',
         assetNumber: 'LT-MBP16-001',
         name: 'MacBook Pro 16"',
-        imageUrl: 'https://picsum.photos/seed/LT-MBP16-001/400/300',
+        imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1926&auto=format&fit=crop',
         purchaseYear: 2023,
         description: 'Powerful laptop for creative professionals. Features the M2 Pro chip for exceptional performance.',
     },
@@ -21,7 +21,7 @@ const initialComputers: Computer[] = [
         id: 'comp-2',
         assetNumber: 'LT-DLLXP-002',
         name: 'Dell XPS 15',
-        imageUrl: 'https://picsum.photos/seed/LT-DLLXP-002/400/300',
+        imageUrl: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?q=80&w=1770&auto=format&fit=crop',
         purchaseYear: 2022,
         description: 'A sleek and powerful Windows laptop with a stunning OLED display, ideal for both work and play.',
     },
@@ -29,7 +29,7 @@ const initialComputers: Computer[] = [
         id: 'comp-3',
         assetNumber: 'LT-THNKPD-003',
         name: 'Lenovo ThinkPad X1',
-        imageUrl: 'https://picsum.photos/seed/LT-THNKPD-003/400/300',
+        imageUrl: 'https://images.unsplash.com/photo-1542393545-10f5cde2c810?q=80&w=1964&auto=format&fit=crop',
         purchaseYear: 2023,
         description: 'Known for its durability and excellent keyboard, the ThinkPad is a reliable business companion.',
     },
@@ -62,8 +62,13 @@ interface AppContextType {
     addComputer: (computer: Omit<Computer, 'id'>) => Promise<void>;
     addBooking: (booking: Omit<Booking, 'id'>) => Promise<boolean>;
     setCurrentUser: (user: User) => void;
+    logout: () => void;
     findComputerById: (id: string) => Computer | undefined;
     findUserById: (id: string) => User | undefined;
+    updateComputer: (id: string, computerData: Partial<Omit<Computer, 'id'>>) => Promise<void>;
+    deleteComputer: (id: string) => Promise<void>;
+    updateBooking: (id: string, bookingData: { startDate: Date; endDate: Date }) => Promise<boolean>;
+    deleteBooking: (id: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -72,8 +77,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [users, setUsers] = useState<User[]>(initialUsers);
     const [computers, setComputers] = useState<Computer[]>(initialComputers);
     const [bookings, setBookings] = useState<Booking[]>(initialBookings);
-    const [currentUser, setCurrentUser] = useState<User | null>(initialUsers[0]);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
 
+    const logout = () => {
+        setCurrentUser(null);
+    }
 
     const addUser = async (name: string) => {
         const newUser: User = {
@@ -91,6 +99,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         };
         setComputers(prev => [...prev, newComputer]);
     };
+    
+    const updateComputer = async (id: string, computerData: Partial<Omit<Computer, 'id'>>) => {
+        setComputers(prev =>
+            prev.map(c =>
+                c.id === id ? { ...c, ...computerData } : c
+            )
+        );
+    };
+
+    const deleteComputer = async (id: string) => {
+        setComputers(prev => prev.filter(c => c.id !== id));
+        setBookings(prev => prev.filter(b => b.computerId !== id));
+    };
 
     const addBooking = useCallback(async (booking: Omit<Booking, 'id'>): Promise<boolean> => {
         const newBookingStart = new Date(booking.startDate);
@@ -107,7 +128,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
              const existingEnd = new Date(b.endDate);
              existingEnd.setHours(0,0,0,0);
 
-             // Conflict if the new booking period overlaps with an existing one
              return newBookingStart <= existingEnd && newBookingEnd >= existingStart;
         });
         
@@ -123,12 +143,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return true;
     }, [bookings]);
 
+    const updateBooking = useCallback(async (id: string, bookingData: { startDate: Date; endDate: Date }): Promise<boolean> => {
+        const newBookingStart = new Date(bookingData.startDate);
+        newBookingStart.setHours(0, 0, 0, 0);
+        const newBookingEnd = new Date(bookingData.endDate);
+        newBookingEnd.setHours(0, 0, 0, 0);
+
+        const bookingToUpdate = bookings.find(b => b.id === id);
+        if (!bookingToUpdate) return false;
+
+        const isConflict = bookings.some(b => {
+            if (b.id === id || b.computerId !== bookingToUpdate.computerId) {
+                return false;
+            }
+            const existingStart = new Date(b.startDate);
+            existingStart.setHours(0, 0, 0, 0);
+            const existingEnd = new Date(b.endDate);
+            existingEnd.setHours(0, 0, 0, 0);
+
+            return newBookingStart <= existingEnd && newBookingEnd >= existingStart;
+        });
+
+        if (isConflict) {
+            return false;
+        }
+
+        setBookings(prev => prev.map(b => b.id === id ? { ...b, ...bookingData } : b));
+        return true;
+    }, [bookings]);
+
+    const deleteBooking = async (id: string) => {
+        setBookings(prev => prev.filter(b => b.id !== id));
+    };
+
     const findComputerById = (id: string) => computers.find(c => c.id === id);
     const findUserById = (id:string) => users.find(u => u.id === id);
 
 
     return (
-        <AppContext.Provider value={{ users, computers, bookings, currentUser, addUser, addComputer, addBooking, setCurrentUser, findComputerById, findUserById }}>
+        <AppContext.Provider value={{ 
+            users, computers, bookings, currentUser, 
+            addUser, addComputer, addBooking, setCurrentUser, logout,
+            findComputerById, findUserById, updateComputer, deleteComputer,
+            updateBooking, deleteBooking
+        }}>
             {children}
         </AppContext.Provider>
     );

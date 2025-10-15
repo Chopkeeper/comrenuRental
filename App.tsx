@@ -3,9 +3,14 @@ import { AppProvider, useApp } from './contexts/AppContext';
 import AdminView from './views/AdminView';
 import UserView from './views/UserView';
 import Header from './components/Header';
+import LoginView from './views/LoginView';
 
 const AppContent: React.FC = () => {
     const { currentUser } = useApp();
+
+    if (!currentUser) {
+        return <LoginView />;
+    }
 
     return (
         <div className="min-h-screen bg-slate-100">

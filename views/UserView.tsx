@@ -10,6 +10,7 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -30,6 +31,7 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
         }
         
         setError('');
+        setIsSubmitting(true);
 
         const success = await addBooking({
             computerId: computer.id,
@@ -38,6 +40,7 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
             endDate: end,
         });
         
+        setIsSubmitting(false);
         if (success) {
             onClose();
         } else {
@@ -59,7 +62,9 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
             </div>
              <div className="flex justify-end gap-2">
                 <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Confirm Booking</button>
+                <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-indigo-400">
+                    {isSubmitting ? 'Checking...' : 'Confirm Booking'}
+                </button>
             </div>
         </form>
     )

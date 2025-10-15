@@ -1,18 +1,10 @@
-
 import React from 'react';
 import { useApp } from '../contexts/AppContext';
 import { UserIcon } from './icons/UserIcon';
 import { ComputerIcon } from './icons/ComputerIcon';
 
 const Header: React.FC = () => {
-    const { users, currentUser, setCurrentUser } = useApp();
-
-    const handleUserChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedUser = users.find(u => u.id === e.target.value);
-        if (selectedUser) {
-            setCurrentUser(selectedUser);
-        }
-    };
+    const { currentUser, logout } = useApp();
 
     return (
         <header className="bg-white shadow-md">
@@ -23,20 +15,21 @@ const Header: React.FC = () => {
                         Computer Rental System
                     </h1>
                 </div>
-                <div className="flex items-center gap-3">
-                    <UserIcon className="h-6 w-6 text-slate-500" />
-                    <select
-                        value={currentUser?.id || ''}
-                        onChange={handleUserChange}
-                        className="p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                    >
-                        {users.map(user => (
-                            <option key={user.id} value={user.id}>
-                                {user.name} ({user.role})
-                            </option>
-                        ))}
-                    </select>
-                </div>
+                {currentUser && (
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                           <UserIcon className="h-6 w-6 text-slate-500" />
+                           <span className="font-medium text-slate-700">Welcome, {currentUser.name}</span>
+                        </div>
+                        <button
+                            onClick={logout}
+                            className="px-4 py-2 bg-slate-200 text-slate-800 rounded-md hover:bg-slate-300 transition text-sm font-semibold"
+                            aria-label="Logout"
+                        >
+                            Logout
+                        </button>
+                    </div>
+                )}
             </div>
         </header>
     );
