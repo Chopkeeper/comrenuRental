@@ -33,7 +33,7 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
         setError('');
         setIsSubmitting(true);
 
-        const success = await addBooking({
+        await addBooking({
             computerId: computer.id,
             userId: currentUser.id,
             startDate: start,
@@ -41,11 +41,8 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
         });
         
         setIsSubmitting(false);
-        if (success) {
-            onClose();
-        } else {
-            setError('Booking conflict. Please choose different dates.');
-        }
+        alert('Your booking request has been sent for approval.');
+        onClose();
     };
     
     return (
@@ -63,12 +60,76 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
              <div className="flex justify-end gap-2">
                 <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
                 <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-indigo-400">
-                    {isSubmitting ? 'Checking...' : 'Confirm Booking'}
+                    {isSubmitting ? 'Submitting...' : 'Request Booking'}
                 </button>
             </div>
         </form>
     )
 
+}
+
+const MyBookings: React.FC = () => {
+    const { currentUser, bookings, findComputerById, deleteBooking } = useApp();
+    if (!currentUser) return null;
+
+    const myBookings = bookings
+        .filter(b => b.userId === currentUser.id)
+        .sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+
+    if (myBookings.length === 0) {
+        return null; // Don't show the section if there are no bookings
+    }
+    
+    const handleCancel = (bookingId: string) => {
+        if (window.confirm('Are you sure you want to cancel this booking request?')) {
+            deleteBooking(bookingId);
+        }
+    };
+
+    return (
+         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold text-slate-900 mb-4">My Bookings</h2>
+            <div className="overflow-x-auto">
+                 <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-50">
+                        <tr className="border-b">
+                            <th className="p-2 font-semibold">Computer</th>
+                            <th className="p-2 font-semibold">From</th>
+                            <th className="p-2 font-semibold">To</th>
+                            <th className="p-2 font-semibold">Status</th>
+                            <th className="p-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {myBookings.map(booking => {
+                            const computer = findComputerById(booking.computerId);
+                            return (
+                                <tr key={booking.id} className="border-b hover:bg-slate-50">
+                                    <td className="p-2">{computer?.name}</td>
+                                    <td className="p-2">{booking.startDate.toLocaleDateString()}</td>
+                                    <td className="p-2">{booking.endDate.toLocaleDateString()}</td>
+                                    <td className="p-2">
+                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full capitalize ${
+                                            booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                        }`}>
+                                            {booking.status}
+                                        </span>
+                                    </td>
+                                    <td className="p-2 text-right">
+                                        {booking.status === 'pending' && (
+                                            <button onClick={() => handleCancel(booking.id)} className="text-xs text-red-600 hover:underline font-semibold">
+                                                Cancel Request
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            )
+                        })}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    )
 }
 
 const UserView: React.FC = () => {
@@ -77,6 +138,7 @@ const UserView: React.FC = () => {
 
     return (
         <div className="space-y-8">
+            <MyBookings />
             <div>
                 <h2 className="text-3xl font-bold text-slate-900 mb-4">Available Computers</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">

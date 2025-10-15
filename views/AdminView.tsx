@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import BookingCalendar from '../components/BookingCalendar';
@@ -6,16 +5,16 @@ import Modal from '../components/Modal';
 import { UserIcon } from '../components/icons/UserIcon';
 import { ComputerIcon } from '../components/icons/ComputerIcon';
 import { generateComputerDescription } from '../services/geminiService';
+import { CheckIcon } from '../components/icons/CheckIcon';
+import { XIcon } from '../components/icons/XIcon';
 
 const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [name, setName] = useState('');
-    // FIX: Add state for password
     const [password, setPassword] = useState('');
     const { addUser } = useApp();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // FIX: Check for password and pass it to addUser
         if (name.trim() && password) {
             addUser(name.trim(), password);
             onClose();
@@ -36,7 +35,6 @@ const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     required
                 />
             </div>
-            {/* FIX: Add password input field */}
             <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
                 <input
@@ -119,6 +117,69 @@ const AddComputerForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     );
 };
 
+const PendingBookings: React.FC = () => {
+    const { bookings, findUserById, findComputerById, approveBooking, deleteBooking } = useApp();
+    const pendingBookings = bookings.filter(b => b.status === 'pending').sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+
+    const handleApprove = async (bookingId: string) => {
+        const success = await approveBooking(bookingId);
+        if (!success) {
+            alert('Approval failed: This booking conflicts with an already confirmed booking.');
+        }
+    };
+
+    const handleReject = (bookingId: string) => {
+        if (window.confirm('Are you sure you want to reject and delete this booking request?')) {
+            deleteBooking(bookingId);
+        }
+    };
+    
+    return (
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
+            <h3 className="text-xl font-bold text-slate-800 mb-4">Pending Booking Requests ({pendingBookings.length})</h3>
+            {pendingBookings.length === 0 ? (
+                 <p className="text-slate-500">There are no pending booking requests.</p>
+            ) : (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50">
+                            <tr className="border-b">
+                                <th className="p-2 font-semibold">User</th>
+                                <th className="p-2 font-semibold">Computer</th>
+                                <th className="p-2 font-semibold">From</th>
+                                <th className="p-2 font-semibold">To</th>
+                                <th className="p-2 font-semibold text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {pendingBookings.map(booking => {
+                                const user = findUserById(booking.userId);
+                                const computer = findComputerById(booking.computerId);
+                                return (
+                                     <tr key={booking.id} className="border-b hover:bg-slate-50">
+                                        <td className="p-2">{user?.name}</td>
+                                        <td className="p-2">{computer?.name}</td>
+                                        <td className="p-2">{booking.startDate.toLocaleDateString()}</td>
+                                        <td className="p-2">{booking.endDate.toLocaleDateString()}</td>
+                                        <td className="p-2 flex justify-end gap-2">
+                                            <button onClick={() => handleApprove(booking.id)} className="p-2 text-green-600 hover:bg-green-100 rounded-full transition-colors" title="Approve">
+                                                <CheckIcon className="h-5 w-5"/>
+                                            </button>
+                                            <button onClick={() => handleReject(booking.id)} className="p-2 text-red-600 hover:bg-red-100 rounded-full transition-colors" title="Reject">
+                                                <XIcon className="h-5 w-5"/>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 const AdminView: React.FC = () => {
     const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
@@ -140,7 +201,12 @@ const AdminView: React.FC = () => {
                 </div>
             </div>
 
-            <BookingCalendar />
+            <PendingBookings />
+            
+            <div>
+                <h2 className="text-3xl font-bold text-slate-900 mb-4">Confirmed Bookings Calendar</h2>
+                <BookingCalendar />
+            </div>
 
             <Modal isOpen={isAddUserModalOpen} onClose={() => setAddUserModalOpen(false)}>
                 <AddUserForm onClose={() => setAddUserModalOpen(false)} />

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User, Computer, Booking } from '../types';
 
@@ -26,8 +25,9 @@ const parseBookings = (bookings: any[]): Booking[] => {
 };
 
 const initialBookingsData: Booking[] = parseBookings([
-    { id: 'b1', computerId: 'c1', userId: 'u2', startDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
-    { id: 'b2', computerId: 'c3', userId: 'u3', startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) },
+    { id: 'b1', computerId: 'c1', userId: 'u2', startDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), status: 'confirmed' },
+    { id: 'b2', computerId: 'c3', userId: 'u3', startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), status: 'confirmed' },
+    { id: 'b3', computerId: 'c2', userId: 'u2', startDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), status: 'pending' },
 ]);
 
 
@@ -40,9 +40,10 @@ interface AppContextType {
     logout: () => void;
     addUser: (name: string, password?: string) => void;
     addComputer: (computer: Omit<Computer, 'id'>) => void;
-    addBooking: (booking: Omit<Booking, 'id'>) => Promise<boolean>;
+    addBooking: (booking: Omit<Booking, 'id' | 'status'>) => Promise<boolean>;
     updateBooking: (bookingId: string, updates: Partial<Pick<Booking, 'startDate' | 'endDate'>>) => Promise<boolean>;
     deleteBooking: (bookingId: string) => void;
+    approveBooking: (bookingId: string) => Promise<boolean>;
     findComputerById: (id: string) => Computer | undefined;
     findUserById: (id: string) => User | undefined;
     changePassword: (userId: string, oldPassword?: string, newPassword?: string) => boolean;
@@ -125,6 +126,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     const isConflict = (newBooking: Omit<Booking, 'id' | 'userId'> & {startDate: Date; endDate: Date}, existingBookingId?: string): boolean => {
         return bookings.some(booking => {
+            if (booking.status !== 'confirmed') return false; // Only check confirmed bookings
             if (booking.id === existingBookingId) return false; // Ignore the booking being updated
             if (booking.computerId !== newBooking.computerId) return false; // Different computer
 
@@ -139,15 +141,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
 
 
-    const addBooking = async (booking: Omit<Booking, 'id'>): Promise<boolean> => {
-        if (isConflict(booking)) {
-            return false;
-        }
+    const addBooking = async (booking: Omit<Booking, 'id' | 'status'>): Promise<boolean> => {
         const newBooking: Booking = {
             id: `b${Date.now()}`,
             ...booking,
+            status: 'pending',
         };
         setBookings(prev => [...prev, newBooking]);
+        return true;
+    };
+
+    const approveBooking = async (bookingId: string): Promise<boolean> => {
+        const bookingToApprove = bookings.find(b => b.id === bookingId);
+        if (!bookingToApprove) return false;
+
+        if (isConflict(bookingToApprove)) {
+            return false; // Conflict found, cannot approve
+        }
+
+        setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'confirmed' } : b));
         return true;
     };
 
@@ -196,6 +208,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         addBooking,
         updateBooking,
         deleteBooking,
+        approveBooking,
         findComputerById,
         findUserById,
         changePassword,

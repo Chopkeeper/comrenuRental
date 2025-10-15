@@ -26,6 +26,7 @@ const BookingCalendar: React.FC = () => {
     const getBookingsForDay = (day: Date): Booking[] => {
         if (!day) return [];
         return bookings.filter(booking => {
+            if (booking.status !== 'confirmed') return false;
             const startDate = new Date(booking.startDate);
             startDate.setHours(0, 0, 0, 0);
             const endDate = new Date(booking.endDate);
