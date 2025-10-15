@@ -17,17 +17,17 @@ const ChangePasswordModal: React.FC<{ isOpen: boolean; onClose: () => void; }> =
         setSuccess('');
 
         if (newPassword !== confirmPassword) {
-            setError("New passwords do not match.");
+            setError("รหัสผ่านใหม่ไม่ตรงกัน");
             return;
         }
         if (!currentUser) {
-            setError("No user is logged in.");
+            setError("ไม่มีผู้ใช้เข้าสู่ระบบ");
             return;
         }
 
         const isSuccess = changePassword(currentUser.id, oldPassword, newPassword);
         if (isSuccess) {
-            setSuccess("Password changed successfully!");
+            setSuccess("เปลี่ยนรหัสผ่านสำเร็จ!");
             setOldPassword('');
             setNewPassword('');
             setConfirmPassword('');
@@ -36,7 +36,7 @@ const ChangePasswordModal: React.FC<{ isOpen: boolean; onClose: () => void; }> =
                 setSuccess('');
             }, 2000);
         } else {
-            setError("Incorrect old password.");
+            setError("รหัสผ่านเก่าไม่ถูกต้อง");
         }
     };
     
@@ -52,11 +52,11 @@ const ChangePasswordModal: React.FC<{ isOpen: boolean; onClose: () => void; }> =
     return (
         <Modal isOpen={isOpen} onClose={handleClose}>
             <form onSubmit={handleSubmit} className="space-y-4">
-                <h3 className="text-lg font-medium leading-6 text-gray-900">Change Password</h3>
+                <h3 className="text-lg font-medium leading-6 text-gray-900">เปลี่ยนรหัสผ่าน</h3>
                 {error && <p className="text-red-500 text-sm bg-red-50 p-2 rounded-md">{error}</p>}
                 {success && <p className="text-green-600 text-sm bg-green-50 p-2 rounded-md">{success}</p>}
                 <div>
-                    <label htmlFor="oldPassword"className="block text-sm font-medium text-slate-700">Old Password</label>
+                    <label htmlFor="oldPassword"className="block text-sm font-medium text-slate-700">รหัสผ่านเก่า</label>
                     <input
                         type="password"
                         id="oldPassword"
@@ -67,7 +67,7 @@ const ChangePasswordModal: React.FC<{ isOpen: boolean; onClose: () => void; }> =
                     />
                 </div>
                  <div>
-                    <label htmlFor="newPassword"className="block text-sm font-medium text-slate-700">New Password</label>
+                    <label htmlFor="newPassword"className="block text-sm font-medium text-slate-700">รหัสผ่านใหม่</label>
                     <input
                         type="password"
                         id="newPassword"
@@ -78,7 +78,7 @@ const ChangePasswordModal: React.FC<{ isOpen: boolean; onClose: () => void; }> =
                     />
                 </div>
                  <div>
-                    <label htmlFor="confirmPassword"className="block text-sm font-medium text-slate-700">Confirm New Password</label>
+                    <label htmlFor="confirmPassword"className="block text-sm font-medium text-slate-700">ยืนยันรหัสผ่านใหม่</label>
                     <input
                         type="password"
                         id="confirmPassword"
@@ -89,8 +89,8 @@ const ChangePasswordModal: React.FC<{ isOpen: boolean; onClose: () => void; }> =
                     />
                 </div>
                 <div className="flex justify-end gap-2">
-                    <button type="button" onClick={handleClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
-                    <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Update Password</button>
+                    <button type="button" onClick={handleClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">ยกเลิก</button>
+                    <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">อัปเดตรหัสผ่าน</button>
                 </div>
             </form>
         </Modal>

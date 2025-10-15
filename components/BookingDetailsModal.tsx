@@ -23,7 +23,7 @@ const BookingDetailsModal: React.FC<{ booking: Booking; onClose: () => void; }> 
     const canManage = currentUser?.role === 'admin' || currentUser?.id === booking.userId;
 
     const handleDelete = () => {
-        if (window.confirm('Are you sure you want to delete this booking?')) {
+        if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบการจองนี้?')) {
             deleteBooking(booking.id);
             onClose();
         }
@@ -35,12 +35,12 @@ const BookingDetailsModal: React.FC<{ booking: Booking; onClose: () => void; }> 
         const end = new Date(endDate);
 
         if (start > end) {
-            setError('End date must be after start date.');
+            setError('วันที่สิ้นสุดต้องอยู่หลังวันที่เริ่มต้น');
             return;
         }
 
         if (!reason.trim()) {
-            setError('Please provide a reason for the booking.');
+            setError('กรุณาระบุเหตุผลในการจอง');
             return;
         }
 
@@ -52,23 +52,23 @@ const BookingDetailsModal: React.FC<{ booking: Booking; onClose: () => void; }> 
         if (success) {
             setIsEditing(false);
         } else {
-            setError('Booking conflict. Please choose different dates.');
+            setError('เกิดข้อขัดแย้งในการจอง กรุณาเลือกวันอื่น');
         }
     };
 
     return (
         <Modal isOpen={true} onClose={onClose}>
             <div className="space-y-4">
-                <h3 className="text-xl font-bold text-gray-900">Booking Details</h3>
+                <h3 className="text-xl font-bold text-gray-900">รายละเอียดการจอง</h3>
                 
                 {!isEditing ? (
                     <div className="space-y-3 text-slate-700">
-                        <p><span className="font-semibold">Computer:</span> {computer?.name}</p>
-                        <p><span className="font-semibold">User:</span> {user?.name}</p>
-                        <p><span className="font-semibold">From:</span> {new Date(booking.startDate).toLocaleDateString()}</p>
-                        <p><span className="font-semibold">To:</span> {new Date(booking.endDate).toLocaleDateString()}</p>
+                        <p><span className="font-semibold">คอมพิวเตอร์:</span> {computer?.name}</p>
+                        <p><span className="font-semibold">ผู้ใช้:</span> {user?.name}</p>
+                        <p><span className="font-semibold">จาก:</span> {new Date(booking.startDate).toLocaleDateString('th-TH')}</p>
+                        <p><span className="font-semibold">ถึง:</span> {new Date(booking.endDate).toLocaleDateString('th-TH')}</p>
                         <div className="pt-2">
-                            <p className="font-semibold">Reason:</p>
+                            <p className="font-semibold">เหตุผล:</p>
                             <p className="text-sm italic bg-slate-50 p-2 rounded-md whitespace-pre-wrap">{booking.reason}</p>
                         </div>
                     </div>
@@ -76,15 +76,15 @@ const BookingDetailsModal: React.FC<{ booking: Booking; onClose: () => void; }> 
                     <form onSubmit={handleUpdate} className="space-y-4">
                          {error && <p className="text-red-500 text-sm">{error}</p>}
                         <div>
-                            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">Start Date</label>
+                            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700">วันที่เริ่มต้น</label>
                             <input type="date" id="startDate" value={startDate} onChange={e => setStartDate(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
                         </div>
                         <div>
-                            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">End Date</label>
+                            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">วันที่สิ้นสุด</label>
                             <input type="date" id="endDate" value={endDate} onChange={e => setEndDate(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
                         </div>
                         <div>
-                            <label htmlFor="reason" className="block text-sm font-medium text-gray-700">Reason for Booking</label>
+                            <label htmlFor="reason" className="block text-sm font-medium text-gray-700">เหตุผลในการจอง</label>
                             <textarea 
                                 id="reason" 
                                 value={reason} 
@@ -95,9 +95,9 @@ const BookingDetailsModal: React.FC<{ booking: Booking; onClose: () => void; }> 
                             />
                         </div>
                          <div className="flex justify-end gap-2">
-                            <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                            <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">ยกเลิก</button>
                             <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:bg-indigo-400">
-                                {isSubmitting ? 'Checking...' : 'Save Changes'}
+                                {isSubmitting ? 'กำลังตรวจสอบ...' : 'บันทึกการเปลี่ยนแปลง'}
                             </button>
                         </div>
                     </form>
@@ -108,14 +108,14 @@ const BookingDetailsModal: React.FC<{ booking: Booking; onClose: () => void; }> 
                     {canManage && !isEditing && (
                         <>
                             <button onClick={handleDelete} className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200 font-semibold">
-                                <TrashIcon className="h-5 w-5"/>Delete
+                                <TrashIcon className="h-5 w-5"/>ลบ
                             </button>
                             <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 font-semibold">
-                                <PencilIcon className="h-5 w-5"/>Edit
+                                <PencilIcon className="h-5 w-5"/>แก้ไข
                             </button>
                         </>
                     )}
-                     <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Close</button>
+                     <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">ปิด</button>
                 </div>
             </div>
         </Modal>

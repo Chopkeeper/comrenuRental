@@ -54,12 +54,12 @@ const BookingCalendar: React.FC = () => {
                 <div className="flex justify-between items-center mb-4">
                     <button onClick={() => changeMonth(-1)} className="p-2 rounded-full hover:bg-slate-200 transition"><ChevronLeftIcon /></button>
                     <h3 className="text-xl font-semibold">
-                        {currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                        {currentDate.toLocaleString('th-TH', { month: 'long', year: 'numeric' })}
                     </h3>
                     <button onClick={() => changeMonth(1)} className="p-2 rounded-full hover:bg-slate-200 transition"><ChevronRightIcon /></button>
                 </div>
                 <div className="grid grid-cols-7 gap-1 text-center font-medium text-slate-500 mb-2">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                    <div>อา</div><div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div><div>ส</div>
                 </div>
                 <div className="grid grid-cols-7 gap-1">
                     {days.map((day, index) => (

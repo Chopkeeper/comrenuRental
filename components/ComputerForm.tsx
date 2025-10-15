@@ -49,7 +49,7 @@ const ComputerForm: React.FC<ComputerFormProps> = ({ onClose, computerToEdit }) 
 
     const handleGenerateDescription = async () => {
         if(!name || !purchaseYear) {
-            alert("Please enter a name and purchase year first.");
+            alert("กรุณากรอกชื่อและปีที่ซื้อก่อน");
             return;
         }
         setIsGenerating(true);
@@ -58,7 +58,7 @@ const ComputerForm: React.FC<ComputerFormProps> = ({ onClose, computerToEdit }) 
             setDescription(desc);
         } catch (error) {
             console.error(error);
-            setDescription("Error generating description.");
+            setDescription("เกิดข้อผิดพลาดในการสร้างคำอธิบาย");
         } finally {
             setIsGenerating(false);
         }
@@ -75,7 +75,7 @@ const ComputerForm: React.FC<ComputerFormProps> = ({ onClose, computerToEdit }) 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!imagePreview) {
-            alert('Please upload an image for the computer.');
+            alert('กรุณาอัปโหลดรูปภาพสำหรับคอมพิวเตอร์');
             return;
         }
         if (assetNumber.trim() && name.trim() && description.trim()) {
@@ -98,17 +98,17 @@ const ComputerForm: React.FC<ComputerFormProps> = ({ onClose, computerToEdit }) 
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-             <h3 className="text-lg font-medium leading-6 text-gray-900">{isEditing ? 'Edit Computer' : 'Add New Computer'}</h3>
+             <h3 className="text-lg font-medium leading-6 text-gray-900">{isEditing ? 'แก้ไขข้อมูลคอมพิวเตอร์' : 'เพิ่มคอมพิวเตอร์ใหม่'}</h3>
             <div>
-                <label htmlFor="assetNumber" className="block text-sm font-medium text-gray-700">Asset Number</label>
+                <label htmlFor="assetNumber" className="block text-sm font-medium text-gray-700">รหัสทรัพย์สิน</label>
                 <input type="text" id="assetNumber" value={assetNumber} onChange={(e) => setAssetNumber(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
             </div>
             <div>
-                <label htmlFor="computerName" className="block text-sm font-medium text-gray-700">Computer Name</label>
+                <label htmlFor="computerName" className="block text-sm font-medium text-gray-700">ชื่อคอมพิวเตอร์</label>
                 <input type="text" id="computerName" value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
             </div>
              <div>
-                <label className="block text-sm font-medium text-gray-700">Image</label>
+                <label className="block text-sm font-medium text-gray-700">รูปภาพ</label>
                 <div className="mt-1 flex items-center gap-4">
                     {imagePreview && <img src={imagePreview} alt="Preview" className="h-16 w-24 object-cover rounded shadow-sm"/>}
                     <div className="flex-grow">
@@ -128,19 +128,19 @@ const ComputerForm: React.FC<ComputerFormProps> = ({ onClose, computerToEdit }) 
                 </div>
             </div>
             <div>
-                <label htmlFor="purchaseYear" className="block text-sm font-medium text-gray-700">Purchase Year</label>
+                <label htmlFor="purchaseYear" className="block text-sm font-medium text-gray-700">ปีที่ซื้อ</label>
                 <input type="number" id="purchaseYear" value={purchaseYear} onChange={(e) => setPurchaseYear(parseInt(e.target.value))} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
             </div>
             <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">คำอธิบาย</label>
                 <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required></textarea>
                  <button type="button" onClick={handleGenerateDescription} disabled={isGenerating} className="mt-2 text-sm text-indigo-600 hover:text-indigo-800 disabled:opacity-50 disabled:cursor-not-allowed">
-                    {isGenerating ? 'Generating...' : '✨ Auto-generate with AI'}
+                    {isGenerating ? 'กำลังสร้าง...' : '✨ สร้างอัตโนมัติด้วย AI'}
                 </button>
             </div>
             <div className="flex justify-end gap-2">
-                <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">{isEditing ? 'Save Changes' : 'Add Computer'}</button>
+                <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">ยกเลิก</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">{isEditing ? 'บันทึกการเปลี่ยนแปลง' : 'เพิ่มคอมพิวเตอร์'}</button>
             </div>
         </form>
     );

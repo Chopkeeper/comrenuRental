@@ -3,16 +3,16 @@ import type { User, Computer, Booking } from '../types';
 
 // Initial Data for demonstration
 const initialUsersData: User[] = [
-    { id: 'u1', name: 'Admin', password: 'admin', role: 'admin' },
-    { id: 'u2', name: 'Alice', password: 'password', role: 'user' },
-    { id: 'u3', name: 'Bob', password: 'password', role: 'user' },
+    { id: 'u1', name: 'ผู้ดูแลระบบ', password: 'admin', role: 'admin' },
+    { id: 'u2', name: 'อลิซ', password: 'password', role: 'user' },
+    { id: 'u3', name: 'บ๊อบ', password: 'password', role: 'user' },
 ];
 
 const initialComputersData: Computer[] = [
-    { id: 'c1', assetNumber: 'DELL-001', name: 'Dell Latitude 7420', imageUrl: 'https://picsum.photos/seed/DELL-001/400/300', purchaseYear: 2021, description: 'A reliable business laptop for everyday tasks.' },
-    { id: 'c2', assetNumber: 'MBP-001', name: 'MacBook Pro 16"', imageUrl: 'https://picsum.photos/seed/MBP-001/400/300', purchaseYear: 2022, description: 'Powerful and sleek, perfect for creative professionals.' },
-    { id: 'c3', assetNumber: 'LEN-001', name: 'Lenovo ThinkPad X1', imageUrl: 'https://picsum.photos/seed/LEN-001/400/300', purchaseYear: 2023, description: 'Ultralight and durable with a best-in-class keyboard.' },
-    { id: 'c4', assetNumber: 'HP-001', name: 'HP Spectre x360', imageUrl: 'https://picsum.photos/seed/HP-001/400/300', purchaseYear: 2022, description: 'Versatile 2-in-1 with a stunning display.' },
+    { id: 'c1', assetNumber: 'DELL-001', name: 'Dell Latitude 7420', imageUrl: 'https://picsum.photos/seed/DELL-001/400/300', purchaseYear: 2021, description: 'แล็ปท็อปธุรกิจที่เชื่อถือได้สำหรับงานประจำวัน' },
+    { id: 'c2', assetNumber: 'MBP-001', name: 'MacBook Pro 16"', imageUrl: 'https://picsum.photos/seed/MBP-001/400/300', purchaseYear: 2022, description: 'ทรงพลังและเพรียวบาง เหมาะสำหรับมืออาชีพสายสร้างสรรค์' },
+    { id: 'c3', assetNumber: 'LEN-001', name: 'Lenovo ThinkPad X1', imageUrl: 'https://picsum.photos/seed/LEN-001/400/300', purchaseYear: 2023, description: 'เบาเป็นพิเศษและทนทาน พร้อมคีย์บอร์ดที่ดีที่สุดในระดับเดียวกัน' },
+    { id: 'c4', assetNumber: 'HP-001', name: 'HP Spectre x360', imageUrl: 'https://picsum.photos/seed/HP-001/400/300', purchaseYear: 2022, description: 'อุปกรณ์ 2-in-1 ที่หลากหลายพร้อมจอแสดงผลที่น่าทึ่ง' },
 ];
 
 // Helper to parse dates from localStorage
@@ -25,9 +25,9 @@ const parseBookings = (bookings: any[]): Booking[] => {
 };
 
 const initialBookingsData: Booking[] = parseBookings([
-    { id: 'b1', computerId: 'c1', userId: 'u2', startDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), status: 'confirmed', reason: 'For a presentation at the downtown office.' },
-    { id: 'b2', computerId: 'c3', userId: 'u3', startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), status: 'confirmed', reason: 'Working remotely from a client site.' },
-    { id: 'b3', computerId: 'c2', userId: 'u2', startDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), status: 'pending', reason: 'Video editing for the new marketing campaign.' },
+    { id: 'b1', computerId: 'c1', userId: 'u2', startDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), status: 'confirmed', reason: 'สำหรับนำเสนอผลงานที่ออฟฟิศในเมือง' },
+    { id: 'b2', computerId: 'c3', userId: 'u3', startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), status: 'confirmed', reason: 'สำหรับทำงานนอกสถานที่ที่ไซต์ลูกค้า' },
+    { id: 'b3', computerId: 'c2', userId: 'u2', startDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), status: 'pending', reason: 'สำหรับตัดต่อวิดีโอแคมเปญการตลาดใหม่' },
 ]);
 
 

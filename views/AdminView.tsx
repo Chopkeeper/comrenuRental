@@ -26,9 +26,9 @@ const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Add New User</h3>
+            <h3 className="text-lg font-medium leading-6 text-gray-900">เพิ่มผู้ใช้ใหม่</h3>
             <div>
-                <label htmlFor="userName" className="block text-sm font-medium text-gray-700">User Name</label>
+                <label htmlFor="userName" className="block text-sm font-medium text-gray-700">ชื่อผู้ใช้</label>
                 <input
                     type="text"
                     id="userName"
@@ -39,7 +39,7 @@ const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 />
             </div>
             <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">รหัสผ่าน</label>
                 <input
                     type="password"
                     id="password"
@@ -50,8 +50,8 @@ const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 />
             </div>
             <div className="flex justify-end gap-2">
-                <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Add User</button>
+                <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">ยกเลิก</button>
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">เพิ่มผู้ใช้</button>
             </div>
         </form>
     );
@@ -64,12 +64,12 @@ const PendingBookings: React.FC = () => {
     const handleApprove = async (bookingId: string) => {
         const success = await approveBooking(bookingId);
         if (!success) {
-            alert('Approval failed: This booking conflicts with an already confirmed booking.');
+            alert('การอนุมัติล้มเหลว: การจองนี้ขัดแย้งกับการจองอื่นที่ได้รับการยืนยันแล้ว');
         }
     };
 
     const handleReject = (bookingId: string) => {
-        if (window.confirm('Are you sure you want to reject and delete this booking request?')) {
+        if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธและลบคำขอนี้?')) {
             deleteBooking(bookingId);
         }
     };
@@ -80,17 +80,17 @@ const PendingBookings: React.FC = () => {
 
     return (
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
-            <h3 className="text-xl font-bold text-slate-800 mb-4">Pending Booking Requests ({pendingBookings.length})</h3>
+            <h3 className="text-xl font-bold text-slate-800 mb-4">คำขอจองที่รอดำเนินการ ({pendingBookings.length})</h3>
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50">
                         <tr className="border-b">
-                            <th className="p-2 font-semibold">User</th>
-                            <th className="p-2 font-semibold">Computer</th>
-                            <th className="p-2 font-semibold">From</th>
-                            <th className="p-2 font-semibold">To</th>
-                            <th className="p-2 font-semibold">Reason</th>
-                            <th className="p-2 font-semibold text-right">Actions</th>
+                            <th className="p-2 font-semibold">ผู้ใช้</th>
+                            <th className="p-2 font-semibold">คอมพิวเตอร์</th>
+                            <th className="p-2 font-semibold">จาก</th>
+                            <th className="p-2 font-semibold">ถึง</th>
+                            <th className="p-2 font-semibold">เหตุผล</th>
+                            <th className="p-2 font-semibold text-right">การดำเนินการ</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -101,18 +101,18 @@ const PendingBookings: React.FC = () => {
                                  <tr key={booking.id} className="border-b hover:bg-slate-50">
                                     <td className="p-2">{user?.name}</td>
                                     <td className="p-2">{computer?.name}</td>
-                                    <td className="p-2">{booking.startDate.toLocaleDateString()}</td>
-                                    <td className="p-2">{booking.endDate.toLocaleDateString()}</td>
+                                    <td className="p-2">{booking.startDate.toLocaleDateString('th-TH')}</td>
+                                    <td className="p-2">{booking.endDate.toLocaleDateString('th-TH')}</td>
                                     <td className="p-2 max-w-xs">
                                         <p className="truncate" title={booking.reason}>
                                             {booking.reason}
                                         </p>
                                     </td>
                                     <td className="p-2 flex justify-end gap-2">
-                                        <button onClick={() => handleApprove(booking.id)} className="p-2 text-green-600 hover:bg-green-100 rounded-full transition-colors" title="Approve">
+                                        <button onClick={() => handleApprove(booking.id)} className="p-2 text-green-600 hover:bg-green-100 rounded-full transition-colors" title="อนุมัติ">
                                             <CheckIcon className="h-5 w-5"/>
                                         </button>
-                                        <button onClick={() => handleReject(booking.id)} className="p-2 text-red-600 hover:bg-red-100 rounded-full transition-colors" title="Reject">
+                                        <button onClick={() => handleReject(booking.id)} className="p-2 text-red-600 hover:bg-red-100 rounded-full transition-colors" title="ปฏิเสธ">
                                             <XIcon className="h-5 w-5"/>
                                         </button>
                                     </td>
@@ -131,7 +131,7 @@ const ManageComputers: React.FC = () => {
     const [editingComputer, setEditingComputer] = useState<Computer | null>(null);
 
     const handleDelete = (computerId: string) => {
-        if (window.confirm('Are you sure you want to delete this computer? This will also remove all associated bookings.')) {
+        if (window.confirm('คุณแน่ใจหรือไม่ว่าต้องการลบคอมพิวเตอร์เครื่องนี้? การดำเนินการนี้จะลบการจองทั้งหมดที่เกี่ยวข้องด้วย')) {
             deleteComputer(computerId);
         }
     };
@@ -139,16 +139,16 @@ const ManageComputers: React.FC = () => {
     return (
         <>
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
-                <h3 className="text-xl font-bold text-slate-800 mb-4">Manage Computers ({computers.length})</h3>
+                <h3 className="text-xl font-bold text-slate-800 mb-4">จัดการคอมพิวเตอร์ ({computers.length})</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50">
                             <tr className="border-b">
-                                <th className="p-2 font-semibold">Image</th>
-                                <th className="p-2 font-semibold">Asset #</th>
-                                <th className="p-2 font-semibold">Name</th>
-                                <th className="p-2 font-semibold">Year</th>
-                                <th className="p-2 font-semibold text-right">Actions</th>
+                                <th className="p-2 font-semibold">รูปภาพ</th>
+                                <th className="p-2 font-semibold">รหัสทรัพย์สิน</th>
+                                <th className="p-2 font-semibold">ชื่อ</th>
+                                <th className="p-2 font-semibold">ปี</th>
+                                <th className="p-2 font-semibold text-right">การดำเนินการ</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -161,10 +161,10 @@ const ManageComputers: React.FC = () => {
                                     <td className="p-2">{computer.name}</td>
                                     <td className="p-2">{computer.purchaseYear}</td>
                                     <td className="p-2 flex justify-end items-center gap-2 h-14">
-                                        <button onClick={() => setEditingComputer(computer)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors" title="Edit">
+                                        <button onClick={() => setEditingComputer(computer)} className="p-2 text-blue-600 hover:bg-blue-100 rounded-full transition-colors" title="แก้ไข">
                                             <PencilIcon className="h-5 w-5"/>
                                         </button>
-                                        <button onClick={() => handleDelete(computer.id)} className="p-2 text-red-600 hover:bg-red-100 rounded-full transition-colors" title="Delete">
+                                        <button onClick={() => handleDelete(computer.id)} className="p-2 text-red-600 hover:bg-red-100 rounded-full transition-colors" title="ลบ">
                                             <TrashIcon className="h-5 w-5"/>
                                         </button>
                                     </td>
@@ -189,15 +189,15 @@ const AdminView: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-3xl font-bold text-slate-900">Admin Dashboard</h2>
+                <h2 className="text-3xl font-bold text-slate-900">แดชบอร์ดผู้ดูแลระบบ</h2>
                 <div className="flex gap-2">
                     <button onClick={() => setAddUserModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition">
                         <UserIcon className="h-5 w-5" />
-                        Add User
+                        เพิ่มผู้ใช้
                     </button>
                     <button onClick={() => setAddComputerModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700 transition">
                         <ComputerIcon className="h-5 w-5" />
-                        Add Computer
+                        เพิ่มคอมพิวเตอร์
                     </button>
                 </div>
             </div>
@@ -206,7 +206,7 @@ const AdminView: React.FC = () => {
             <ManageComputers />
             
             <div>
-                <h2 className="text-3xl font-bold text-slate-900 mb-4">Confirmed Bookings Calendar</h2>
+                <h2 className="text-3xl font-bold text-slate-900 mb-4">ปฏิทินการจองที่ยืนยันแล้ว</h2>
                 <BookingCalendar />
             </div>
 
