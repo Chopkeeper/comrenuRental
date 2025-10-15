@@ -49,6 +49,7 @@ interface AppContextType {
     findComputerById: (id: string) => Computer | undefined;
     findUserById: (id: string) => User | undefined;
     changePassword: (userId: string, oldPassword?: string, newPassword?: string) => boolean;
+    importData: (jsonString: string) => boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -218,6 +219,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
         return false;
     };
+    
+    const importData = (jsonString: string): boolean => {
+        try {
+            const data = JSON.parse(jsonString);
+            // Basic validation
+            if (!data.users || !data.computers || !data.bookings || !Array.isArray(data.users)) {
+                throw new Error("Invalid data structure");
+            }
+    
+            const parsedBookings = parseBookings(data.bookings);
+    
+            setUsers(data.users);
+            setComputers(data.computers);
+            setBookings(parsedBookings);
+            
+            // Log out current user to prevent inconsistencies
+            logout();
+    
+            alert("นำเข้าข้อมูลสำเร็จ! กรุณาล็อกอินอีกครั้ง");
+            return true;
+        } catch (error) {
+            console.error("Failed to import data:", error);
+            alert("นำเข้าข้อมูลไม่สำเร็จ กรุณาตรวจสอบว่าไฟล์ที่เลือกเป็นไฟล์ที่ส่งออกมาจากแอปพลิเคชันนี้อย่างถูกต้อง");
+            return false;
+        }
+    };
 
     const value = {
         currentUser,
@@ -237,6 +264,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         findComputerById,
         findUserById,
         changePassword,
+        importData,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

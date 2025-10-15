@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useApp } from '../contexts/AppContext';
 import BookingCalendar from '../components/BookingCalendar';
 import Modal from '../components/Modal';
@@ -10,6 +10,9 @@ import type { Computer } from '../types';
 import { PencilIcon } from '../components/icons/PencilIcon';
 import { TrashIcon } from '../components/icons/TrashIcon';
 import ComputerForm from '../components/ComputerForm';
+import { DownloadIcon } from '../components/icons/DownloadIcon';
+import { UploadIcon } from '../components/icons/UploadIcon';
+
 
 const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [name, setName] = useState('');
@@ -183,14 +186,58 @@ const ManageComputers: React.FC = () => {
 
 
 const AdminView: React.FC = () => {
+    const { users, computers, bookings, importData } = useApp();
     const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
     const [isAddComputerModalOpen, setAddComputerModalOpen] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleExport = () => {
+        const dataToExport = {
+            users,
+            computers,
+            bookings,
+        };
+        const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+            JSON.stringify(dataToExport, null, 2)
+        )}`;
+        const link = document.createElement("a");
+        link.href = jsonString;
+        link.download = "computer-rental-data.json";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const text = e.target?.result;
+            if (typeof text === 'string') {
+                if (window.confirm("คุณแน่ใจหรือไม่ว่าต้องการนำเข้าข้อมูลนี้? การดำเนินการนี้จะเขียนทับข้อมูลทั้งหมดที่มีอยู่ในเบราว์เซอร์นี้")) {
+                    importData(text);
+                }
+            }
+        };
+        reader.readAsText(file);
+
+        if(event.target) {
+            event.target.value = '';
+        }
+    };
+
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 className="text-3xl font-bold text-slate-900">แดชบอร์ดผู้ดูแลระบบ</h2>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                     <button onClick={() => setAddUserModalOpen(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition">
                         <UserIcon className="h-5 w-5" />
                         เพิ่มผู้ใช้
@@ -199,6 +246,21 @@ const AdminView: React.FC = () => {
                         <ComputerIcon className="h-5 w-5" />
                         เพิ่มคอมพิวเตอร์
                     </button>
+                     <button onClick={handleImportClick} className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-md shadow hover:bg-slate-700 transition">
+                        <UploadIcon className="h-5 w-5" />
+                        นำเข้าข้อมูล
+                    </button>
+                    <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-md shadow hover:bg-slate-700 transition">
+                        <DownloadIcon className="h-5 w-5" />
+                        ส่งออกข้อมูล
+                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        accept=".json"
+                        className="hidden"
+                    />
                 </div>
             </div>
 
