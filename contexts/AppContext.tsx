@@ -40,6 +40,8 @@ interface AppContextType {
     logout: () => void;
     addUser: (name: string, password?: string) => void;
     addComputer: (computer: Omit<Computer, 'id'>) => void;
+    updateComputer: (computerId: string, updates: Partial<Computer>) => void;
+    deleteComputer: (computerId: string) => void;
     addBooking: (booking: Omit<Booking, 'id' | 'status'>) => Promise<boolean>;
     updateBooking: (bookingId: string, updates: Partial<Pick<Booking, 'startDate' | 'endDate'>>) => Promise<boolean>;
     deleteBooking: (bookingId: string) => void;
@@ -94,7 +96,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [bookings]);
 
     const login = (name: string, password?: string): boolean => {
-        const user = users.find(u => u.name === name && u.password === password);
+        const user = users.find(u => u.name.toLowerCase() === name.toLowerCase() && u.password === password);
         if (user) {
             setCurrentUser(user);
             return true;
@@ -122,6 +124,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             ...computer,
         };
         setComputers(prev => [...prev, newComputer]);
+    };
+
+    const updateComputer = (computerId: string, updates: Partial<Computer>) => {
+        setComputers(prev => prev.map(c => c.id === computerId ? { ...c, ...updates } : c));
+    };
+
+    const deleteComputer = (computerId: string) => {
+        setComputers(prev => prev.filter(c => c.id !== computerId));
+        // Also delete associated bookings
+        setBookings(prev => prev.filter(b => b.computerId !== computerId));
     };
     
     const isConflict = (newBooking: Omit<Booking, 'id' | 'userId'> & {startDate: Date; endDate: Date}, existingBookingId?: string): boolean => {
@@ -186,7 +198,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const changePassword = (userId: string, oldPassword?: string, newPassword?: string): boolean => {
         const user = users.find(u => u.id === userId);
-        if (user && user.password === oldPassword && newPassword) {
+        if (!user || !newPassword) return false;
+
+        // Admin changing other user's password doesn't need old password
+        if (currentUser?.role === 'admin' && currentUser.id !== userId) {
+             setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: newPassword } : u));
+             return true;
+        }
+
+        // User changing their own password
+        if (user.password === oldPassword) {
             setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: newPassword } : u));
             if (currentUser?.id === userId) {
                 setCurrentUser(prev => prev ? { ...prev, password: newPassword } : null);
@@ -205,6 +226,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         logout,
         addUser,
         addComputer,
+        updateComputer,
+        deleteComputer,
         addBooking,
         updateBooking,
         deleteBooking,
