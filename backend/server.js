@@ -1,6 +1,8 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import computerRoutes from './routes/computers.js';
@@ -11,6 +13,11 @@ import User from './models/User.js';
 
 // Load env vars
 dotenv.config();
+
+// ES Module equivalents for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 const app = express();
 
@@ -25,6 +32,23 @@ app.use('/api/auth', authRoutes);
 app.use('/api/computers', computerRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/users', userRoutes);
+
+
+// Serve frontend in production
+if (process.env.NODE_ENV === 'production') {
+    // Serve static files from the 'dist' directory
+    app.use(express.static(path.join(__dirname, '..', 'dist')));
+
+    // For all other routes that are not API routes, serve the index.html file
+    app.get('*', (req, res) => {
+        res.sendFile(path.resolve(__dirname, '..', 'dist', 'index.html'));
+    });
+} else {
+    // Basic route for testing API in development
+    app.get('/', (req, res) => {
+        res.send('API is running...');
+    });
+}
 
 
 // Connect to database and seed initial data
@@ -54,8 +78,3 @@ connectDB().then(async () => {
 const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-// Basic route for testing
-app.get('/', (req, res) => {
-    res.send('API is running...');
-});

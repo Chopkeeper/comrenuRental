@@ -8,8 +8,10 @@
     "dev:backend": "npm --prefix backend run dev",
     "dev": "concurrently \"npm:dev:frontend\" \"npm:dev:backend\"",
     "build": "vite build",
+    "start": "npm --prefix backend start",
     "preview": "vite preview",
-    "backend:install": "npm install --prefix backend"
+    "backend:install": "npm install --prefix backend",
+    "postinstall": "npm run backend:install"
   },
   "dependencies": {
     "@google/genai": "^1.24.0",
