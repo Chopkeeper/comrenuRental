@@ -8,11 +8,22 @@ interface ComputerFormProps {
     computerToEdit?: Computer | null;
 }
 
+const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+    });
+};
+
+
 const ComputerForm: React.FC<ComputerFormProps> = ({ onClose, computerToEdit }) => {
     const [assetNumber, setAssetNumber] = useState('');
     const [name, setName] = useState('');
     const [purchaseYear, setPurchaseYear] = useState(new Date().getFullYear());
     const [description, setDescription] = useState('');
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const { addComputer, updateComputer } = useApp();
 
@@ -24,12 +35,14 @@ const ComputerForm: React.FC<ComputerFormProps> = ({ onClose, computerToEdit }) 
             setName(computerToEdit.name);
             setPurchaseYear(computerToEdit.purchaseYear);
             setDescription(computerToEdit.description);
+            setImagePreview(computerToEdit.imageUrl);
         } else {
             // Reset form for adding new
             setAssetNumber('');
             setName('');
             setPurchaseYear(new Date().getFullYear());
             setDescription('');
+            setImagePreview(null);
         }
     }, [computerToEdit, isEditing]);
 
@@ -51,15 +64,26 @@ const ComputerForm: React.FC<ComputerFormProps> = ({ onClose, computerToEdit }) 
         }
     };
 
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            const base64 = await fileToBase64(file);
+            setImagePreview(base64);
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!imagePreview) {
+            alert('Please upload an image for the computer.');
+            return;
+        }
         if (assetNumber.trim() && name.trim() && description.trim()) {
             const computerData = { 
                 assetNumber, 
                 name, 
                 purchaseYear, 
-                // Don't update image URL on edit unless we add that feature
-                imageUrl: computerToEdit?.imageUrl || `https://picsum.photos/seed/${assetNumber}/400/300`, 
+                imageUrl: imagePreview,
                 description 
             };
             
@@ -82,6 +106,26 @@ const ComputerForm: React.FC<ComputerFormProps> = ({ onClose, computerToEdit }) 
             <div>
                 <label htmlFor="computerName" className="block text-sm font-medium text-gray-700">Computer Name</label>
                 <input type="text" id="computerName" value={name} onChange={(e) => setName(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
+            </div>
+             <div>
+                <label className="block text-sm font-medium text-gray-700">Image</label>
+                <div className="mt-1 flex items-center gap-4">
+                    {imagePreview && <img src={imagePreview} alt="Preview" className="h-16 w-24 object-cover rounded shadow-sm"/>}
+                    <div className="flex-grow">
+                        <input 
+                            type="file" 
+                            id="computerImage" 
+                            accept="image/png, image/jpeg, image/webp"
+                            onChange={handleImageChange}
+                            className="block w-full text-sm text-slate-500
+                                       file:mr-4 file:py-2 file:px-4
+                                       file:rounded-full file:border-0
+                                       file:text-sm file:font-semibold
+                                       file:bg-indigo-50 file:text-indigo-700
+                                       hover:file:bg-indigo-100"
+                        />
+                    </div>
+                </div>
             </div>
             <div>
                 <label htmlFor="purchaseYear" className="block text-sm font-medium text-gray-700">Purchase Year</label>
