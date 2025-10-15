@@ -21,4 +21,5 @@ export interface Booking {
   startDate: Date;
   endDate: Date;
   status: 'pending' | 'confirmed';
+  reason: string;
 }

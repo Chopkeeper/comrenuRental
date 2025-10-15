@@ -14,6 +14,7 @@ const BookingDetailsModal: React.FC<{ booking: Booking; onClose: () => void; }> 
     const [isEditing, setIsEditing] = useState(false);
     const [startDate, setStartDate] = useState(formatDateForInput(booking.startDate));
     const [endDate, setEndDate] = useState(formatDateForInput(booking.endDate));
+    const [reason, setReason] = useState(booking.reason || '');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -38,9 +39,14 @@ const BookingDetailsModal: React.FC<{ booking: Booking; onClose: () => void; }> 
             return;
         }
 
+        if (!reason.trim()) {
+            setError('Please provide a reason for the booking.');
+            return;
+        }
+
         setError('');
         setIsSubmitting(true);
-        const success = await updateBooking(booking.id, { startDate: start, endDate: end });
+        const success = await updateBooking(booking.id, { startDate: start, endDate: end, reason: reason.trim() });
         setIsSubmitting(false);
 
         if (success) {
@@ -61,6 +67,10 @@ const BookingDetailsModal: React.FC<{ booking: Booking; onClose: () => void; }> 
                         <p><span className="font-semibold">User:</span> {user?.name}</p>
                         <p><span className="font-semibold">From:</span> {new Date(booking.startDate).toLocaleDateString()}</p>
                         <p><span className="font-semibold">To:</span> {new Date(booking.endDate).toLocaleDateString()}</p>
+                        <div className="pt-2">
+                            <p className="font-semibold">Reason:</p>
+                            <p className="text-sm italic bg-slate-50 p-2 rounded-md whitespace-pre-wrap">{booking.reason}</p>
+                        </div>
                     </div>
                 ) : (
                     <form onSubmit={handleUpdate} className="space-y-4">
@@ -72,6 +82,17 @@ const BookingDetailsModal: React.FC<{ booking: Booking; onClose: () => void; }> 
                         <div>
                             <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">End Date</label>
                             <input type="date" id="endDate" value={endDate} onChange={e => setEndDate(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
+                        </div>
+                        <div>
+                            <label htmlFor="reason" className="block text-sm font-medium text-gray-700">Reason for Booking</label>
+                            <textarea 
+                                id="reason" 
+                                value={reason} 
+                                onChange={e => setReason(e.target.value)} 
+                                rows={3}
+                                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+                                required 
+                            />
                         </div>
                          <div className="flex justify-end gap-2">
                             <button type="button" onClick={() => setIsEditing(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>

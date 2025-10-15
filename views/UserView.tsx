@@ -9,6 +9,7 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
     const { currentUser, addBooking } = useApp();
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [reason, setReason] = useState('');
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -18,8 +19,8 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
             setError('You must be logged in to book a computer.');
             return;
         }
-        if (!startDate || !endDate) {
-            setError('Please select a start and end date.');
+        if (!startDate || !endDate || !reason.trim()) {
+            setError('Please fill out all fields, including the reason for booking.');
             return;
         }
         const start = new Date(startDate);
@@ -38,6 +39,7 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
             userId: currentUser.id,
             startDate: start,
             endDate: end,
+            reason: reason.trim(),
         });
         
         setIsSubmitting(false);
@@ -56,6 +58,18 @@ const BookingForm: React.FC<{ computer: Computer; onClose: () => void }> = ({ co
             <div>
                 <label htmlFor="endDate" className="block text-sm font-medium text-gray-700">End Date</label>
                 <input type="date" id="endDate" value={endDate} onChange={e => setEndDate(e.target.value)} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
+            </div>
+            <div>
+                <label htmlFor="reason" className="block text-sm font-medium text-gray-700">Reason for Booking</label>
+                <textarea 
+                    id="reason" 
+                    value={reason} 
+                    onChange={e => setReason(e.target.value)} 
+                    rows={3}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" 
+                    placeholder="e.g., For project X presentation at client site."
+                    required 
+                />
             </div>
              <div className="flex justify-end gap-2">
                 <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>

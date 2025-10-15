@@ -89,6 +89,7 @@ const PendingBookings: React.FC = () => {
                             <th className="p-2 font-semibold">Computer</th>
                             <th className="p-2 font-semibold">From</th>
                             <th className="p-2 font-semibold">To</th>
+                            <th className="p-2 font-semibold">Reason</th>
                             <th className="p-2 font-semibold text-right">Actions</th>
                         </tr>
                     </thead>
@@ -102,6 +103,11 @@ const PendingBookings: React.FC = () => {
                                     <td className="p-2">{computer?.name}</td>
                                     <td className="p-2">{booking.startDate.toLocaleDateString()}</td>
                                     <td className="p-2">{booking.endDate.toLocaleDateString()}</td>
+                                    <td className="p-2 max-w-xs">
+                                        <p className="truncate" title={booking.reason}>
+                                            {booking.reason}
+                                        </p>
+                                    </td>
                                     <td className="p-2 flex justify-end gap-2">
                                         <button onClick={() => handleApprove(booking.id)} className="p-2 text-green-600 hover:bg-green-100 rounded-full transition-colors" title="Approve">
                                             <CheckIcon className="h-5 w-5"/>

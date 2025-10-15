@@ -25,9 +25,9 @@ const parseBookings = (bookings: any[]): Booking[] => {
 };
 
 const initialBookingsData: Booking[] = parseBookings([
-    { id: 'b1', computerId: 'c1', userId: 'u2', startDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), status: 'confirmed' },
-    { id: 'b2', computerId: 'c3', userId: 'u3', startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), status: 'confirmed' },
-    { id: 'b3', computerId: 'c2', userId: 'u2', startDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), status: 'pending' },
+    { id: 'b1', computerId: 'c1', userId: 'u2', startDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), status: 'confirmed', reason: 'For a presentation at the downtown office.' },
+    { id: 'b2', computerId: 'c3', userId: 'u3', startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), status: 'confirmed', reason: 'Working remotely from a client site.' },
+    { id: 'b3', computerId: 'c2', userId: 'u2', startDate: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), status: 'pending', reason: 'Video editing for the new marketing campaign.' },
 ]);
 
 
@@ -43,7 +43,7 @@ interface AppContextType {
     updateComputer: (computerId: string, updates: Partial<Computer>) => void;
     deleteComputer: (computerId: string) => void;
     addBooking: (booking: Omit<Booking, 'id' | 'status'>) => Promise<boolean>;
-    updateBooking: (bookingId: string, updates: Partial<Pick<Booking, 'startDate' | 'endDate'>>) => Promise<boolean>;
+    updateBooking: (bookingId: string, updates: Partial<Pick<Booking, 'startDate' | 'endDate' | 'reason'>>) => Promise<boolean>;
     deleteBooking: (bookingId: string) => void;
     approveBooking: (bookingId: string) => Promise<boolean>;
     findComputerById: (id: string) => Computer | undefined;
@@ -175,14 +175,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return true;
     };
 
-    const updateBooking = async (bookingId: string, updates: Partial<Pick<Booking, 'startDate' | 'endDate'>>): Promise<boolean> => {
+    const updateBooking = async (bookingId: string, updates: Partial<Pick<Booking, 'startDate' | 'endDate' | 'reason'>>): Promise<boolean> => {
         const bookingToUpdate = bookings.find(b => b.id === bookingId);
         if (!bookingToUpdate) return false;
         
         const updatedBookingData = { ...bookingToUpdate, ...updates };
 
-        if (isConflict(updatedBookingData, bookingId)) {
-            return false;
+        if (updates.startDate || updates.endDate) {
+            if (isConflict(updatedBookingData, bookingId)) {
+                return false;
+            }
         }
 
         setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, ...updates } : b));
