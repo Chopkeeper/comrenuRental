@@ -57,18 +57,19 @@ if (process.env.NODE_ENV === 'production') {
     });
 }
 
+const PORT = process.env.PORT || 5001;
 
-// Connect to database and ensure admin user exists
+// Connect to database and start server
 connectDB().then(async () => {
     try {
-        // Ensure admin user exists and has a known password
+        console.log('Database connected. Setting up admin user...');
+        
         const adminName = 'admin';
         const adminPassword = 'admin123';
 
         let adminUser = await User.findOne({ name: adminName }).select('+password');
 
         if (!adminUser) {
-            // If admin doesn't exist, create it. The pre-save hook will hash the password.
             await User.create({
                 name: adminName,
                 password: adminPassword,
@@ -80,10 +81,9 @@ connectDB().then(async () => {
             console.log('Please change the password after first login.');
             console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
         } else {
-            // If admin exists, check if the password matches. If not, reset it.
             const isMatch = await adminUser.matchPassword(adminPassword);
             if (!isMatch) {
-                adminUser.password = adminPassword; // The pre-save hook will hash this new password
+                adminUser.password = adminPassword;
                 await adminUser.save();
                 console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
                 console.log('Default admin user password has been RESET.');
@@ -93,13 +93,14 @@ connectDB().then(async () => {
                  console.log('Admin user is configured correctly.');
             }
         }
+        
+        console.log('Admin user setup complete.');
+
+        // Start the server ONLY after the DB is connected and admin is set up
+        app.listen(PORT, () => console.log(`Server is ready and listening on port ${PORT}`));
+
     } catch (error) {
-        console.error('Error during admin user setup:', error);
+        console.error('Error during application startup:', error);
         process.exit(1);
     }
 });
-
-
-const PORT = process.env.PORT || 5001;
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
