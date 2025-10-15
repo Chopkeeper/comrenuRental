@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcryptjs';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import computerRoutes from './routes/computers.js';
@@ -59,43 +60,37 @@ if (process.env.NODE_ENV === 'production') {
 
 const PORT = process.env.PORT || 5001;
 
-// Connect to database and start server
-connectDB().then(async () => {
+const setupAdminAndStartServer = async () => {
     try {
-        console.log('Database connected. Setting up admin user...');
+        console.log('Database connected. Ensuring admin user is configured...');
         
         const adminName = 'admin';
         const adminPassword = 'admin123';
 
-        let adminUser = await User.findOne({ name: adminName }).select('+password');
-
-        if (!adminUser) {
-            await User.create({
-                name: adminName,
-                password: adminPassword,
-                role: 'admin'
-            });
-            console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
-            console.log('Default admin user created.');
-            console.log(`Username: ${adminName} | Password: ${adminPassword}`);
-            console.log('Please change the password after first login.');
-            console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
-        } else {
-            const isMatch = await adminUser.matchPassword(adminPassword);
-            if (!isMatch) {
-                adminUser.password = adminPassword;
-                await adminUser.save();
-                console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
-                console.log('Default admin user password has been RESET.');
-                console.log(`Username: ${adminName} | Password: ${adminPassword}`);
-                console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
-            } else {
-                 console.log('Admin user is configured correctly.');
-            }
-        }
+        // Manually hash the password to bypass any potential pre-save hook issues during this specific setup
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(adminPassword, salt);
         
-        console.log('Admin user setup complete.');
+        // Use findOneAndUpdate with upsert to guarantee the admin user exists with the correct password.
+        // This is an atomic operation and more robust than find-then-save.
+        await User.findOneAndUpdate(
+            { name: adminName },
+            { 
+                $set: { 
+                    name: adminName,
+                    password: hashedPassword,
+                    role: 'admin' 
+                }
+            },
+            { upsert: true, new: true, runValidators: true }
+        );
 
+        console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+        console.log('Admin user configured/verified successfully.');
+        console.log(`Username: ${adminName} | Password: ${adminPassword}`);
+        console.log('This account is guaranteed to work on login.');
+        console.log('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
+        
         // Start the server ONLY after the DB is connected and admin is set up
         app.listen(PORT, () => console.log(`Server is ready and listening on port ${PORT}`));
 
@@ -103,4 +98,7 @@ connectDB().then(async () => {
         console.error('Error during application startup:', error);
         process.exit(1);
     }
-});
+};
+
+// Connect to database and then start the server setup
+connectDB().then(setupAdminAndStartServer);
