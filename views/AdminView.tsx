@@ -6,7 +6,9 @@ import { UserIcon } from '../components/icons/UserIcon';
 import { ComputerIcon } from '../components/icons/ComputerIcon';
 import { PencilIcon } from '../components/icons/PencilIcon';
 import { TrashIcon } from '../components/icons/TrashIcon';
+import { DownloadIcon } from '../components/icons/DownloadIcon';
 import { generateComputerDescription } from '../services/geminiService';
+import { exportToCsv } from '../utils/export';
 import type { Computer } from '../types/types';
 
 const fileToBase64 = (file: File): Promise<string> => {
@@ -20,12 +22,13 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [name, setName] = useState('');
+    const [password, setPassword] = useState('');
     const { addUser } = useApp();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (name.trim()) {
-            addUser(name.trim());
+        if (name.trim() && password) {
+            addUser(name.trim(), password);
             onClose();
         }
     };
@@ -40,6 +43,17 @@ const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     id="userName"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    required
+                />
+            </div>
+            <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     required
                 />
@@ -145,6 +159,81 @@ const ComputerForm: React.FC<{ onClose: () => void; computerToEdit: Computer | n
     );
 };
 
+const ReportsSection: React.FC = () => {
+    const { bookings, findComputerById, findUserById } = useApp();
+    const [reportMonth, setReportMonth] = useState(new Date().toISOString().slice(0, 7));
+    const [isExporting, setIsExporting] = useState(false);
+
+    const handleExport = () => {
+        setIsExporting(true);
+        if (!reportMonth) {
+            alert('Please select a month to generate the report.');
+            setIsExporting(false);
+            return;
+        }
+
+        const [year, month] = reportMonth.split('-').map(Number);
+        const startDateOfMonth = new Date(year, month - 1, 1);
+        const endDateOfMonth = new Date(year, month, 0, 23, 59, 59);
+
+        const filteredBookings = bookings.filter(b => {
+            const bookingStart = new Date(b.startDate);
+            const bookingEnd = new Date(b.endDate);
+            return bookingStart <= endDateOfMonth && bookingEnd >= startDateOfMonth;
+        });
+
+        if (filteredBookings.length === 0) {
+            alert(`No bookings found for ${startDateOfMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}.`);
+            setIsExporting(false);
+            return;
+        }
+        
+        const reportData = filteredBookings.map(b => {
+            const computer = findComputerById(b.computerId);
+            const user = findUserById(b.userId);
+            return {
+                'Booking ID': b.id,
+                'Computer Name': computer?.name || 'N/A',
+                'Asset Number': computer?.assetNumber || 'N/A',
+                'Booked By': user?.name || 'N/A',
+                'Start Date': new Date(b.startDate).toLocaleDateString(),
+                'End Date': new Date(b.endDate).toLocaleDateString(),
+            };
+        });
+
+        const monthName = startDateOfMonth.toLocaleString('default', { month: 'long' });
+        exportToCsv(`Booking_Report_${monthName}_${year}.csv`, reportData);
+        setIsExporting(false);
+    };
+
+    return (
+         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
+            <h3 className="text-xl font-semibold mb-4">Monthly Reports</h3>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div>
+                    <label htmlFor="reportMonth" className="block text-sm font-medium text-gray-700">Select Month</label>
+                    <input
+                        type="month"
+                        id="reportMonth"
+                        value={reportMonth}
+                        onChange={(e) => setReportMonth(e.target.value)}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    />
+                </div>
+                <button
+                    onClick={handleExport}
+                    disabled={isExporting}
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-md shadow hover:bg-teal-700 transition self-end sm:self-center mt-2 sm:mt-0 disabled:opacity-50"
+                    aria-label="Export booking report to Excel"
+                >
+                    <DownloadIcon className="h-5 w-5"/>
+                    {isExporting ? 'Exporting...' : 'Export to Excel'}
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const ComputerList: React.FC<{ onEdit: (computer: Computer) => void }> = ({ onEdit }) => {
     const { computers, deleteComputer } = useApp();
     
@@ -213,6 +302,7 @@ const AdminView: React.FC = () => {
                 </div>
             </div>
             
+            <ReportsSection />
             <ComputerList onEdit={handleEditComputer} />
             <BookingCalendar />
 

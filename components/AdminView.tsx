@@ -10,12 +10,15 @@ import { generateComputerDescription } from '../services/geminiService';
 
 const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [name, setName] = useState('');
+    // FIX: Add state for password
+    const [password, setPassword] = useState('');
     const { addUser } = useApp();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (name.trim()) {
-            addUser(name.trim());
+        // FIX: Check for password and pass it to addUser
+        if (name.trim() && password) {
+            addUser(name.trim(), password);
             onClose();
         }
     };
@@ -30,6 +33,18 @@ const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     id="userName"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    required
+                />
+            </div>
+            {/* FIX: Add password input field */}
+            <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     required
                 />

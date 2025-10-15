@@ -3,9 +3,9 @@ import type { User, Computer, Booking } from '../types/types';
 
 // Initial data for demonstration purposes
 const initialUsers: User[] = [
-    { id: 'user-1', name: 'Admin', role: 'admin' },
-    { id: 'user-2', name: 'Alice', role: 'user' },
-    { id: 'user-3', name: 'Bob', role: 'user' },
+    { id: 'user-1', name: 'Admin', role: 'admin', password: 'admin' },
+    { id: 'user-2', name: 'Alice', role: 'user', password: 'password123' },
+    { id: 'user-3', name: 'Bob', role: 'user', password: 'password123' },
 ];
 
 const initialComputers: Computer[] = [
@@ -58,7 +58,8 @@ interface AppContextType {
     computers: Computer[];
     bookings: Booking[];
     currentUser: User | null;
-    addUser: (name: string) => Promise<void>;
+    login: (name: string, password: string) => boolean;
+    addUser: (name: string, password: string) => Promise<void>;
     addComputer: (computer: Omit<Computer, 'id'>) => Promise<void>;
     addBooking: (booking: Omit<Booking, 'id'>) => Promise<boolean>;
     setCurrentUser: (user: User) => void;
@@ -79,14 +80,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [bookings, setBookings] = useState<Booking[]>(initialBookings);
     const [currentUser, setCurrentUser] = useState<User | null>(null);
 
+    const login = (name: string, password: string): boolean => {
+        const user = users.find(u => u.name.toLowerCase() === name.toLowerCase() && u.password === password);
+        if (user) {
+            setCurrentUser(user);
+            return true;
+        }
+        return false;
+    };
+
     const logout = () => {
         setCurrentUser(null);
     }
 
-    const addUser = async (name: string) => {
+    const addUser = async (name: string, password: string) => {
         const newUser: User = {
             id: `user-${Date.now()}`,
             name,
+            password,
             role: 'user', // New users are always 'user' role
         };
         setUsers(prev => [...prev, newUser]);
@@ -183,7 +194,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return (
         <AppContext.Provider value={{ 
             users, computers, bookings, currentUser, 
-            addUser, addComputer, addBooking, setCurrentUser, logout,
+            login, addUser, addComputer, addBooking, setCurrentUser, logout,
             findComputerById, findUserById, updateComputer, deleteComputer,
             updateBooking, deleteBooking
         }}>
