@@ -24,6 +24,7 @@ interface AppContextType {
     users: User[];
     computers: Computer[];
     bookings: Booking[];
+    serverStatus: 'loading' | 'online' | 'offline';
     login: (name: string, password?: string) => Promise<boolean>;
     logout: () => void;
     addUser: (name: string, password?: string) => Promise<boolean>;
@@ -59,6 +60,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [users, setUsers] = useState<User[]>([]);
     const [computers, setComputers] = useState<Computer[]>([]);
     const [bookings, setBookings] = useState<Booking[]>([]);
+    const [serverStatus, setServerStatus] = useState<'loading' | 'online' | 'offline'>('loading');
+
+
+    useEffect(() => {
+        const checkServerStatus = async () => {
+            try {
+                // Use a cache-busting parameter to ensure a fresh request
+                const response = await fetch(`${API_URL}/health?t=${new Date().getTime()}`);
+                if (response.ok) {
+                    setServerStatus('online');
+                } else {
+                    setServerStatus('offline');
+                }
+            } catch (error) {
+                console.error("Server health check failed:", error);
+                setServerStatus('offline');
+            }
+        };
+        checkServerStatus();
+    }, []);
+
 
     const fetchData = useCallback(async () => {
         if (!currentUser) return;
@@ -99,17 +121,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }, [currentUser]);
 
     useEffect(() => {
-        if (currentUser) {
+        if (currentUser && serverStatus === 'online') {
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             fetchData();
-        } else {
+        } else if (!currentUser) {
             localStorage.removeItem('currentUser');
             localStorage.removeItem('authToken');
             setUsers([]);
             setComputers([]);
             setBookings([]);
         }
-    }, [currentUser, fetchData]);
+    }, [currentUser, fetchData, serverStatus]);
 
     const login = async (name: string, password?: string): Promise<boolean> => {
         try {
@@ -337,6 +359,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         users,
         computers,
         bookings,
+        serverStatus,
         login,
         logout,
         addUser,
