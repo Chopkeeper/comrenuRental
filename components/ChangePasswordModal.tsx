@@ -11,7 +11,7 @@ const ChangePasswordModal: React.FC<{ isOpen: boolean; onClose: () => void; }> =
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setSuccess('');
@@ -25,7 +25,7 @@ const ChangePasswordModal: React.FC<{ isOpen: boolean; onClose: () => void; }> =
             return;
         }
 
-        const isSuccess = changePassword(currentUser.id, oldPassword, newPassword);
+        const isSuccess = await changePassword(currentUser.id, oldPassword, newPassword);
         if (isSuccess) {
             setSuccess("เปลี่ยนรหัสผ่านสำเร็จ!");
             setOldPassword('');
