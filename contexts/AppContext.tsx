@@ -1,87 +1,99 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import type { User, Computer, Booking } from '../types/types';
 
-// Initial data for demonstration purposes
-const initialUsers: User[] = [
-    { id: 'user-1', name: 'Admin', role: 'admin', password: 'admin' },
-    { id: 'user-2', name: 'Alice', role: 'user', password: 'password123' },
-    { id: 'user-3', name: 'Bob', role: 'user', password: 'password123' },
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import type { User, Computer, Booking } from '../types';
+
+// Initial Data for demonstration
+const initialUsersData: User[] = [
+    { id: 'u1', name: 'Admin', password: 'admin', role: 'admin' },
+    { id: 'u2', name: 'Alice', password: 'password', role: 'user' },
+    { id: 'u3', name: 'Bob', password: 'password', role: 'user' },
 ];
 
-const initialComputers: Computer[] = [
-    {
-        id: 'comp-1',
-        assetNumber: 'LT-MBP16-001',
-        name: 'MacBook Pro 16"',
-        imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1926&auto=format&fit=crop',
-        purchaseYear: 2023,
-        description: 'Powerful laptop for creative professionals. Features the M2 Pro chip for exceptional performance.',
-    },
-    {
-        id: 'comp-2',
-        assetNumber: 'LT-DLLXP-002',
-        name: 'Dell XPS 15',
-        imageUrl: 'https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?q=80&w=1770&auto=format&fit=crop',
-        purchaseYear: 2022,
-        description: 'A sleek and powerful Windows laptop with a stunning OLED display, ideal for both work and play.',
-    },
-    {
-        id: 'comp-3',
-        assetNumber: 'LT-THNKPD-003',
-        name: 'Lenovo ThinkPad X1',
-        imageUrl: 'https://images.unsplash.com/photo-1542393545-10f5cde2c810?q=80&w=1964&auto=format&fit=crop',
-        purchaseYear: 2023,
-        description: 'Known for its durability and excellent keyboard, the ThinkPad is a reliable business companion.',
-    },
+const initialComputersData: Computer[] = [
+    { id: 'c1', assetNumber: 'DELL-001', name: 'Dell Latitude 7420', imageUrl: 'https://picsum.photos/seed/DELL-001/400/300', purchaseYear: 2021, description: 'A reliable business laptop for everyday tasks.' },
+    { id: 'c2', assetNumber: 'MBP-001', name: 'MacBook Pro 16"', imageUrl: 'https://picsum.photos/seed/MBP-001/400/300', purchaseYear: 2022, description: 'Powerful and sleek, perfect for creative professionals.' },
+    { id: 'c3', assetNumber: 'LEN-001', name: 'Lenovo ThinkPad X1', imageUrl: 'https://picsum.photos/seed/LEN-001/400/300', purchaseYear: 2023, description: 'Ultralight and durable with a best-in-class keyboard.' },
+    { id: 'c4', assetNumber: 'HP-001', name: 'HP Spectre x360', imageUrl: 'https://picsum.photos/seed/HP-001/400/300', purchaseYear: 2022, description: 'Versatile 2-in-1 with a stunning display.' },
 ];
 
-const initialBookings: Booking[] = [
-    {
-        id: 'booking-1',
-        computerId: 'comp-1',
-        userId: 'user-2',
-        startDate: new Date(new Date().setDate(new Date().getDate() + 2)),
-        endDate: new Date(new Date().setDate(new Date().getDate() + 5)),
-    },
-    {
-        id: 'booking-2',
-        computerId: 'comp-3',
-        userId: 'user-3',
-        startDate: new Date(new Date().setDate(new Date().getDate() - 1)),
-        endDate: new Date(new Date().setDate(new Date().getDate() + 1)),
-    },
-];
+// Helper to parse dates from localStorage
+const parseBookings = (bookings: any[]): Booking[] => {
+    return bookings.map(b => ({
+        ...b,
+        startDate: new Date(b.startDate),
+        endDate: new Date(b.endDate),
+    }));
+};
+
+const initialBookingsData: Booking[] = parseBookings([
+    { id: 'b1', computerId: 'c1', userId: 'u2', startDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
+    { id: 'b2', computerId: 'c3', userId: 'u3', startDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) },
+]);
 
 
 interface AppContextType {
+    currentUser: User | null;
     users: User[];
     computers: Computer[];
     bookings: Booking[];
-    currentUser: User | null;
-    login: (name: string, password: string) => boolean;
-    addUser: (name: string, password: string) => Promise<void>;
-    addComputer: (computer: Omit<Computer, 'id'>) => Promise<void>;
-    addBooking: (booking: Omit<Booking, 'id'>) => Promise<boolean>;
-    setCurrentUser: (user: User) => void;
+    login: (name: string, password?: string) => boolean;
     logout: () => void;
+    addUser: (name: string, password?: string) => void;
+    addComputer: (computer: Omit<Computer, 'id'>) => void;
+    addBooking: (booking: Omit<Booking, 'id'>) => Promise<boolean>;
+    updateBooking: (bookingId: string, updates: Partial<Pick<Booking, 'startDate' | 'endDate'>>) => Promise<boolean>;
+    deleteBooking: (bookingId: string) => void;
     findComputerById: (id: string) => Computer | undefined;
     findUserById: (id: string) => User | undefined;
-    updateComputer: (id: string, computerData: Partial<Omit<Computer, 'id'>>) => Promise<void>;
-    deleteComputer: (id: string) => Promise<void>;
-    updateBooking: (id: string, bookingData: { startDate: Date; endDate: Date }) => Promise<boolean>;
-    deleteBooking: (id: string) => Promise<void>;
+    changePassword: (userId: string, oldPassword?: string, newPassword?: string) => boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [users, setUsers] = useState<User[]>(initialUsers);
-    const [computers, setComputers] = useState<Computer[]>(initialComputers);
-    const [bookings, setBookings] = useState<Booking[]>(initialBookings);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+export const useApp = () => {
+    const context = useContext(AppContext);
+    if (!context) {
+        throw new Error('useApp must be used within an AppProvider');
+    }
+    return context;
+};
 
-    const login = (name: string, password: string): boolean => {
-        const user = users.find(u => u.name.toLowerCase() === name.toLowerCase() && u.password === password);
+export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const [currentUser, setCurrentUser] = useState<User | null>(() => {
+        const storedUser = localStorage.getItem('currentUser');
+        return storedUser ? JSON.parse(storedUser) : null;
+    });
+    const [users, setUsers] = useState<User[]>(() => {
+        const storedUsers = localStorage.getItem('users');
+        return storedUsers ? JSON.parse(storedUsers) : initialUsersData;
+    });
+    const [computers, setComputers] = useState<Computer[]>(() => {
+        const storedComputers = localStorage.getItem('computers');
+        return storedComputers ? JSON.parse(storedComputers) : initialComputersData;
+    });
+    const [bookings, setBookings] = useState<Booking[]>(() => {
+        const storedBookings = localStorage.getItem('bookings');
+        return storedBookings ? parseBookings(JSON.parse(storedBookings)) : initialBookingsData;
+    });
+
+    useEffect(() => {
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    }, [currentUser]);
+
+    useEffect(() => {
+        localStorage.setItem('users', JSON.stringify(users));
+    }, [users]);
+
+    useEffect(() => {
+        localStorage.setItem('computers', JSON.stringify(computers));
+    }, [computers]);
+
+    useEffect(() => {
+        localStorage.setItem('bookings', JSON.stringify(bookings));
+    }, [bookings]);
+
+    const login = (name: string, password?: string): boolean => {
+        const user = users.find(u => u.name === name && u.password === password);
         if (user) {
             setCurrentUser(user);
             return true;
@@ -91,122 +103,103 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const logout = () => {
         setCurrentUser(null);
-    }
+    };
 
-    const addUser = async (name: string, password: string) => {
+    const addUser = (name: string, password?: string) => {
         const newUser: User = {
-            id: `user-${Date.now()}`,
+            id: `u${Date.now()}`,
             name,
             password,
-            role: 'user', // New users are always 'user' role
+            role: 'user',
         };
         setUsers(prev => [...prev, newUser]);
     };
 
-    const addComputer = async (computer: Omit<Computer, 'id'>) => {
+    const addComputer = (computer: Omit<Computer, 'id'>) => {
         const newComputer: Computer = {
+            id: `c${Date.now()}`,
             ...computer,
-            id: `comp-${Date.now()}`,
         };
         setComputers(prev => [...prev, newComputer]);
     };
     
-    const updateComputer = async (id: string, computerData: Partial<Omit<Computer, 'id'>>) => {
-        setComputers(prev =>
-            prev.map(c =>
-                c.id === id ? { ...c, ...computerData } : c
-            )
-        );
-    };
+    const isConflict = (newBooking: Omit<Booking, 'id' | 'userId'> & {startDate: Date; endDate: Date}, existingBookingId?: string): boolean => {
+        return bookings.some(booking => {
+            if (booking.id === existingBookingId) return false; // Ignore the booking being updated
+            if (booking.computerId !== newBooking.computerId) return false; // Different computer
 
-    const deleteComputer = async (id: string) => {
-        setComputers(prev => prev.filter(c => c.id !== id));
-        setBookings(prev => prev.filter(b => b.computerId !== id));
-    };
+            const newStart = newBooking.startDate.getTime();
+            const newEnd = newBooking.endDate.getTime();
+            const existingStart = booking.startDate.getTime();
+            const existingEnd = booking.endDate.getTime();
 
-    const addBooking = useCallback(async (booking: Omit<Booking, 'id'>): Promise<boolean> => {
-        const newBookingStart = new Date(booking.startDate);
-        newBookingStart.setHours(0,0,0,0);
-        const newBookingEnd = new Date(booking.endDate);
-        newBookingEnd.setHours(0,0,0,0);
-
-        const isConflict = bookings.some(b => {
-             if (b.computerId !== booking.computerId) {
-                 return false;
-             }
-             const existingStart = new Date(b.startDate);
-             existingStart.setHours(0,0,0,0);
-             const existingEnd = new Date(b.endDate);
-             existingEnd.setHours(0,0,0,0);
-
-             return newBookingStart <= existingEnd && newBookingEnd >= existingStart;
+            // Check for overlap
+            return (newStart < existingEnd && newEnd > existingStart);
         });
-        
-        if (isConflict) {
+    };
+
+
+    const addBooking = async (booking: Omit<Booking, 'id'>): Promise<boolean> => {
+        if (isConflict(booking)) {
             return false;
         }
-        
         const newBooking: Booking = {
+            id: `b${Date.now()}`,
             ...booking,
-            id: `booking-${Date.now()}`,
         };
         setBookings(prev => [...prev, newBooking]);
         return true;
-    }, [bookings]);
+    };
 
-    const updateBooking = useCallback(async (id: string, bookingData: { startDate: Date; endDate: Date }): Promise<boolean> => {
-        const newBookingStart = new Date(bookingData.startDate);
-        newBookingStart.setHours(0, 0, 0, 0);
-        const newBookingEnd = new Date(bookingData.endDate);
-        newBookingEnd.setHours(0, 0, 0, 0);
-
-        const bookingToUpdate = bookings.find(b => b.id === id);
+    const updateBooking = async (bookingId: string, updates: Partial<Pick<Booking, 'startDate' | 'endDate'>>): Promise<boolean> => {
+        const bookingToUpdate = bookings.find(b => b.id === bookingId);
         if (!bookingToUpdate) return false;
+        
+        const updatedBookingData = { ...bookingToUpdate, ...updates };
 
-        const isConflict = bookings.some(b => {
-            if (b.id === id || b.computerId !== bookingToUpdate.computerId) {
-                return false;
-            }
-            const existingStart = new Date(b.startDate);
-            existingStart.setHours(0, 0, 0, 0);
-            const existingEnd = new Date(b.endDate);
-            existingEnd.setHours(0, 0, 0, 0);
-
-            return newBookingStart <= existingEnd && newBookingEnd >= existingStart;
-        });
-
-        if (isConflict) {
+        if (isConflict(updatedBookingData, bookingId)) {
             return false;
         }
 
-        setBookings(prev => prev.map(b => b.id === id ? { ...b, ...bookingData } : b));
+        setBookings(prev => prev.map(b => b.id === bookingId ? { ...b, ...updates } : b));
         return true;
-    }, [bookings]);
+    };
 
-    const deleteBooking = async (id: string) => {
-        setBookings(prev => prev.filter(b => b.id !== id));
+    const deleteBooking = (bookingId: string) => {
+        setBookings(prev => prev.filter(b => b.id !== bookingId));
     };
 
     const findComputerById = (id: string) => computers.find(c => c.id === id);
-    const findUserById = (id:string) => users.find(u => u.id === id);
+    const findUserById = (id: string) => users.find(u => u.id === id);
 
+    const changePassword = (userId: string, oldPassword?: string, newPassword?: string): boolean => {
+        const user = users.find(u => u.id === userId);
+        if (user && user.password === oldPassword && newPassword) {
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: newPassword } : u));
+            if (currentUser?.id === userId) {
+                setCurrentUser(prev => prev ? { ...prev, password: newPassword } : null);
+            }
+            return true;
+        }
+        return false;
+    };
 
-    return (
-        <AppContext.Provider value={{ 
-            users, computers, bookings, currentUser, 
-            login, addUser, addComputer, addBooking, setCurrentUser, logout,
-            findComputerById, findUserById, updateComputer, deleteComputer,
-            updateBooking, deleteBooking
-        }}>
-            {children}
-        </AppContext.Provider>
-    );
-};
+    const value = {
+        currentUser,
+        users,
+        computers,
+        bookings,
+        login,
+        logout,
+        addUser,
+        addComputer,
+        addBooking,
+        updateBooking,
+        deleteBooking,
+        findComputerById,
+        findUserById,
+        changePassword,
+    };
 
-export const useApp = (): AppContextType => {
-    const context = useContext(AppContext);
-    if (!context) {
-        throw new Error('useApp must be used within an AppProvider');
-    }
-    return context;
+    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
