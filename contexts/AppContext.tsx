@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import type { User, Computer, Booking } from '../types';
 
-// Helper to parse dates from API responses or localStorage
+// Helper to parse dates from API responses
 const parseBookings = (bookings: any[]): Booking[] => {
     return bookings.map(b => ({
         ...b,
@@ -10,7 +10,14 @@ const parseBookings = (bookings: any[]): Booking[] => {
     }));
 };
 
-const API_URL = 'http://localhost:5001/api'; // Backend URL
+const API_URL = '/api'; // Use relative path for proxy
+
+// Helper function to get auth token from localStorage
+const getAuthHeader = () => {
+    const token = localStorage.getItem('authToken');
+    return token ? { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+};
+
 
 interface AppContextType {
     currentUser: User | null;
@@ -20,16 +27,17 @@ interface AppContextType {
     login: (name: string, password?: string) => Promise<boolean>;
     logout: () => void;
     addUser: (name: string, password?: string) => Promise<boolean>;
-    addComputer: (computer: Omit<Computer, 'id'>) => void;
-    updateComputer: (computerId: string, updates: Partial<Computer>) => void;
-    deleteComputer: (computerId: string) => void;
+    deleteUser: (userId: string) => Promise<boolean>;
+    addComputer: (computer: Omit<Computer, 'id'>) => Promise<boolean>;
+    updateComputer: (computerId: string, updates: Partial<Computer>) => Promise<boolean>;
+    deleteComputer: (computerId: string) => Promise<boolean>;
     addBooking: (booking: Omit<Booking, 'id' | 'status'>) => Promise<boolean>;
     updateBooking: (bookingId: string, updates: Partial<Pick<Booking, 'startDate' | 'endDate' | 'reason'>>) => Promise<boolean>;
-    deleteBooking: (bookingId: string) => void;
+    deleteBooking: (bookingId: string) => Promise<boolean>;
     approveBooking: (bookingId: string) => Promise<boolean>;
     findComputerById: (id: string) => Computer | undefined;
     findUserById: (id: string) => User | undefined;
-    changePassword: (userId: string, oldPassword?: string, newPassword?: string) => boolean;
+    changePassword: (userId: string, oldPassword?: string, newPassword?: string) => Promise<boolean>;
     importData: (jsonString: string) => boolean;
 }
 
@@ -48,22 +56,60 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         const storedUser = localStorage.getItem('currentUser');
         return storedUser ? JSON.parse(storedUser) : null;
     });
-    // Data will be fetched from API
     const [users, setUsers] = useState<User[]>([]);
     const [computers, setComputers] = useState<Computer[]>([]);
     const [bookings, setBookings] = useState<Booking[]>([]);
 
-    useEffect(() => {
-        // Persist currentUser to localStorage
-        if (currentUser) {
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        } else {
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('authToken');
+    const fetchData = useCallback(async () => {
+        if (!currentUser) return;
+        try {
+            const headers = getAuthHeader();
+            const requests = [
+                fetch(`${API_URL}/computers`, { headers }),
+                fetch(`${API_URL}/bookings`, { headers })
+            ];
+
+            if (currentUser.role === 'admin') {
+                requests.unshift(fetch(`${API_URL}/users`, { headers }));
+            }
+
+            const responses = await Promise.all(requests);
+            
+            if (currentUser.role === 'admin') {
+                const usersRes = responses[0];
+                if (usersRes.ok) setUsers(await usersRes.json());
+                
+                const computersRes = responses[1];
+                if (computersRes.ok) setComputers(await computersRes.json());
+
+                const bookingsRes = responses[2];
+                if (bookingsRes.ok) setBookings(parseBookings(await bookingsRes.json()));
+            } else {
+                 setUsers([currentUser]); // User can only see themselves
+                 const computersRes = responses[0];
+                 if (computersRes.ok) setComputers(await computersRes.json());
+
+                 const bookingsRes = responses[1];
+                 if (bookingsRes.ok) setBookings(parseBookings(await bookingsRes.json()));
+            }
+
+        } catch (error) {
+            console.error("Failed to fetch data:", error);
         }
     }, [currentUser]);
 
-    // TODO: Add useEffect hooks to fetch users, computers, and bookings from the API when the app loads or currentUser changes.
+    useEffect(() => {
+        if (currentUser) {
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            fetchData();
+        } else {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('authToken');
+            setUsers([]);
+            setComputers([]);
+            setBookings([]);
+        }
+    }, [currentUser, fetchData]);
 
     const login = async (name: string, password?: string): Promise<boolean> => {
         try {
@@ -96,14 +142,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     const addUser = async (name: string, password?: string): Promise<boolean> => {
         try {
+             // NOTE: This endpoint is public for the first user (admin), but for subsequent users, it should be protected.
+             // We will handle this logic on the backend. Here, we call it as if it's an admin action.
             const response = await fetch(`${API_URL}/auth/register`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, password, role: 'user' }),
+                headers: getAuthHeader(),
+                body: JSON.stringify({ name, password }), // Backend determines role
             });
             if (response.ok) {
-                alert('เพิ่มผู้ใช้สำเร็จแล้ว');
-                // TODO: Refresh user list after adding
+                alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบด้วยชื่อผู้ใช้และรหัสผ่านที่คุณเพิ่งสร้าง');
+                if(currentUser?.role === 'admin') {
+                    fetchData(); // Refresh user list if an admin is adding another user
+                }
                 return true;
             } else {
                  const errorData = await response.json();
@@ -116,54 +166,165 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             return false;
         }
     };
+
+    const deleteUser = async (userId: string): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_URL}/users/${userId}`, {
+                method: 'DELETE',
+                headers: getAuthHeader(),
+            });
+            if (response.ok) {
+                fetchData();
+                return true;
+            }
+             const errorData = await response.json();
+             alert(`ลบผู้ใช้ไม่สำเร็จ: ${errorData.msg || 'เกิดข้อผิดพลาด'}`);
+            return false;
+        } catch (error) {
+            console.error("Delete user failed:", error);
+            alert('ลบผู้ใช้ไม่สำเร็จ: เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            return false;
+        }
+    };
     
-    // --- Placeholder functions - to be implemented with backend API ---
-
-    const addComputer = (computer: Omit<Computer, 'id'>) => {
-        console.log("TODO: Add computer via API", computer);
-        alert("ฟังก์ชันนี้จะถูกเชื่อมต่อกับ Backend ในขั้นตอนถัดไป");
+    const addComputer = async (computer: Omit<Computer, 'id'>): Promise<boolean> => {
+       try {
+            const response = await fetch(`${API_URL}/computers`, {
+                method: 'POST',
+                headers: getAuthHeader(),
+                body: JSON.stringify(computer),
+            });
+            if (response.ok) {
+                fetchData();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error("Add computer failed:", error);
+            return false;
+        }
     };
 
-    const updateComputer = (computerId: string, updates: Partial<Computer>) => {
-        console.log("TODO: Update computer via API", computerId, updates);
-        alert("ฟังก์ชันนี้จะถูกเชื่อมต่อกับ Backend ในขั้นตอนถัดไป");
+    const updateComputer = async (computerId: string, updates: Partial<Computer>): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_URL}/computers/${computerId}`, {
+                method: 'PUT',
+                headers: getAuthHeader(),
+                body: JSON.stringify(updates),
+            });
+            if (response.ok) {
+                fetchData();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error("Update computer failed:", error);
+            return false;
+        }
     };
 
-    const deleteComputer = (computerId: string) => {
-        console.log("TODO: Delete computer via API", computerId);
-        alert("ฟังก์ชันนี้จะถูกเชื่อมต่อกับ Backend ในขั้นตอนถัดไป");
+    const deleteComputer = async (computerId: string): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_URL}/computers/${computerId}`, {
+                method: 'DELETE',
+                headers: getAuthHeader(),
+            });
+            if (response.ok) {
+                fetchData();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error("Delete computer failed:", error);
+            return false;
+        }
     };
 
     const addBooking = async (booking: Omit<Booking, 'id' | 'status'>): Promise<boolean> => {
-        console.log("TODO: Add booking via API", booking);
-        alert("ฟังก์ชันนี้จะถูกเชื่อมต่อกับ Backend ในขั้นตอนถัดไป");
-        return false;
+         try {
+            const response = await fetch(`${API_URL}/bookings`, {
+                method: 'POST',
+                headers: getAuthHeader(),
+                body: JSON.stringify(booking),
+            });
+            if (response.ok) {
+                fetchData();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error("Add booking failed:", error);
+            return false;
+        }
     };
 
     const approveBooking = async (bookingId: string): Promise<boolean> => {
-        console.log("TODO: Approve booking via API", bookingId);
-        alert("ฟังก์ชันนี้จะถูกเชื่อมต่อกับ Backend ในขั้นตอนถัดไป");
-        return false;
+        try {
+            const response = await fetch(`${API_URL}/bookings/${bookingId}/approve`, {
+                method: 'PUT',
+                headers: getAuthHeader(),
+            });
+            if (response.ok) {
+                fetchData();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error("Approve booking failed:", error);
+            return false;
+        }
     };
 
     const updateBooking = async (bookingId: string, updates: Partial<Pick<Booking, 'startDate' | 'endDate' | 'reason'>>): Promise<boolean> => {
-        console.log("TODO: Update booking via API", bookingId, updates);
-        alert("ฟังก์ชันนี้จะถูกเชื่อมต่อกับ Backend ในขั้นตอนถัดไป");
-        return false;
+        try {
+            const response = await fetch(`${API_URL}/bookings/${bookingId}`, {
+                method: 'PUT',
+                headers: getAuthHeader(),
+                body: JSON.stringify(updates),
+            });
+            if (response.ok) {
+                fetchData();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error("Update booking failed:", error);
+            return false;
+        }
     };
 
-    const deleteBooking = (bookingId: string) => {
-        console.log("TODO: Delete booking via API", bookingId);
-        alert("ฟังก์ชันนี้จะถูกเชื่อมต่อกับ Backend ในขั้นตอนถัดไป");
+    const deleteBooking = async (bookingId: string): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_URL}/bookings/${bookingId}`, {
+                method: 'DELETE',
+                headers: getAuthHeader(),
+            });
+            if (response.ok) {
+                fetchData();
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error("Delete booking failed:", error);
+            return false;
+        }
     };
 
     const findComputerById = (id: string) => computers.find(c => c.id === id);
     const findUserById = (id: string) => users.find(u => u.id === id);
 
-    const changePassword = (userId: string, oldPassword?: string, newPassword?: string): boolean => {
-        console.log("TODO: Change password via API", userId);
-        alert("ฟังก์ชันนี้จะถูกเชื่อมต่อกับ Backend ในขั้นตอนถัดไป");
-        return false;
+    const changePassword = async (userId: string, oldPassword?: string, newPassword?: string): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_URL}/auth/password`, {
+                method: 'PUT',
+                headers: getAuthHeader(),
+                body: JSON.stringify({ oldPassword, newPassword }),
+            });
+            return response.ok;
+        } catch (error) {
+            console.error("Change password failed:", error);
+            return false;
+        }
     };
     
     const importData = (jsonString: string): boolean => {
@@ -179,12 +340,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         login,
         logout,
         addUser,
+        deleteUser,
         addComputer,
         updateComputer,
         deleteComputer,
         addBooking,
         updateBooking,
-        deleteBooking,
+        deleteBooking: (id: string) => deleteBooking(id), // Ensure it returns void
         approveBooking,
         findComputerById,
         findUserById,

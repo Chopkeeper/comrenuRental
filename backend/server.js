@@ -3,6 +3,10 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
+import computerRoutes from './routes/computers.js';
+import bookingRoutes from './routes/bookings.js';
+import userRoutes from './routes/users.js';
+
 
 // Load env vars
 dotenv.config();
@@ -13,13 +17,17 @@ connectDB();
 const app = express();
 
 // Body parser
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase limit for base64 images
 
 // Enable CORS
 app.use(cors());
 
 // Mount routers
 app.use('/api/auth', authRoutes);
+app.use('/api/computers', computerRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/users', userRoutes);
+
 
 const PORT = process.env.PORT || 5001;
 

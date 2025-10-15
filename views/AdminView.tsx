@@ -207,6 +207,69 @@ const ManageComputers: React.FC = () => {
     );
 };
 
+const ManageUsers: React.FC = () => {
+    const { users, deleteUser, currentUser } = useApp();
+
+    const handleDelete = (userId: string, userName: string) => {
+        if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้ "${userName}"? การกระทำนี้ไม่สามารถย้อนกลับได้`)) {
+            deleteUser(userId);
+        }
+    };
+
+    if (users.length <= 1 && users.find(u => u.id === currentUser?.id)) {
+         return (
+             <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
+                <h3 className="text-xl font-bold text-slate-800 mb-2">จัดการผู้ใช้</h3>
+                <p className="text-slate-500">มีเพียงคุณซึ่งเป็นผู้ดูแลระบบในระบบ</p>
+            </div>
+         );
+    }
+
+    return (
+        <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
+            <h3 className="text-xl font-bold text-slate-800 mb-4">จัดการผู้ใช้ ({users.length})</h3>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                    <thead className="bg-slate-50">
+                        <tr className="border-b">
+                            <th className="p-2 font-semibold">ชื่อผู้ใช้</th>
+                            <th className="p-2 font-semibold">บทบาท</th>
+                            <th className="p-2 font-semibold text-right">การดำเนินการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {users.map(user => (
+                            <tr key={user.id} className="border-b hover:bg-slate-50">
+                                <td className="p-2">{user.name}</td>
+                                <td className="p-2 capitalize">
+                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                        user.role === 'admin' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-800'
+                                    }`}>
+                                        {user.role}
+                                    </span>
+                                </td>
+                                <td className="p-2 text-right">
+                                    {user.id !== currentUser?.id ? (
+                                        <button 
+                                            onClick={() => handleDelete(user.id, user.name)} 
+                                            className="p-2 text-red-600 hover:bg-red-100 rounded-full transition-colors" 
+                                            title="ลบผู้ใช้"
+                                        >
+                                            <TrashIcon className="h-5 w-5"/>
+                                        </button>
+                                    ) : (
+                                        <span className="text-xs text-slate-400 italic">บัญชีปัจจุบัน</span>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
 
 const AdminView: React.FC = () => {
     const { importData } = useApp();
@@ -244,6 +307,7 @@ const AdminView: React.FC = () => {
 
             <PendingBookings />
             <ManageComputers />
+            <ManageUsers />
             
             <div>
                 <h2 className="text-3xl font-bold text-slate-900 mb-4">ปฏิทินการจองที่ยืนยันแล้ว</h2>
