@@ -10,9 +10,10 @@ import type { Computer, User } from '../types/types';
 import { PencilIcon } from '../components/icons/PencilIcon';
 import { TrashIcon } from '../components/icons/TrashIcon';
 import ComputerForm from '../components/ComputerForm';
-import { DownloadIcon } from '../components/icons/DownloadIcon';
-import { UploadIcon } from '../components/icons/UploadIcon';
 import { KeyIcon } from '../components/icons/KeyIcon';
+import { DashboardIcon } from '../components/icons/DashboardIcon';
+import { HistoryIcon } from '../components/icons/HistoryIcon';
+import BookingHistory from '../components/BookingHistory';
 
 
 const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -324,16 +325,12 @@ const ManageUsers: React.FC = () => {
 
 
 const AdminView: React.FC = () => {
-    const { users, currentUser, deleteAllUsers } = useApp();
+    const { users, deleteAllUsers } = useApp();
     const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
     const [isAddComputerModalOpen, setAddComputerModalOpen] = useState(false);
     const [isDeleteAllModalOpen, setDeleteAllModalOpen] = useState(false);
     const [deleteConfirmText, setDeleteConfirmText] = useState('');
-    
-    // NOTE: Import/Export is disabled when using a central database.
-    const handleImportExportDisabled = () => {
-        alert("ฟังก์ชันนำเข้า/ส่งออกข้อมูลไม่สามารถใช้งานได้เมื่อเชื่อมต่อกับฐานข้อมูลกลาง");
-    };
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'history'>('dashboard');
 
     const handleDeleteAllUsers = async () => {
         if (deleteConfirmText === 'DELETE') {
@@ -373,14 +370,52 @@ const AdminView: React.FC = () => {
                 </div>
             </div>
 
-            <PendingBookings />
-            <ManageComputers />
-            <ManageUsers />
-            
-            <div>
-                <h2 className="text-3xl font-bold text-slate-900 mb-4">ปฏิทินการจองที่ยืนยันแล้ว</h2>
-                <BookingCalendar />
+            {/* Tab Navigation */}
+            <div className="border-b border-slate-200">
+                <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button
+                        onClick={() => setActiveTab('dashboard')}
+                        className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                            activeTab === 'dashboard'
+                                ? 'border-indigo-500 text-indigo-600'
+                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                        }`}
+                    >
+                        <DashboardIcon className="h-5 w-5" />
+                        <span>ภาพรวม</span>
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('history')}
+                        className={`flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                            activeTab === 'history'
+                                ? 'border-indigo-500 text-indigo-600'
+                                : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                        }`}
+                    >
+                        <HistoryIcon className="h-5 w-5" />
+                        <span>ประวัติการจอง</span>
+                    </button>
+                </nav>
             </div>
+            
+            {/* Conditional Content */}
+            <div className="mt-6">
+                {activeTab === 'dashboard' && (
+                    <div className="space-y-6">
+                        <PendingBookings />
+                        <ManageComputers />
+                        <ManageUsers />
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900 mb-4">ปฏิทินการจองที่ยืนยันแล้ว</h2>
+                            <BookingCalendar />
+                        </div>
+                    </div>
+                )}
+                {activeTab === 'history' && (
+                    <BookingHistory />
+                )}
+            </div>
+
 
             <Modal isOpen={isAddUserModalOpen} onClose={() => setAddUserModalOpen(false)}>
                 <AddUserForm onClose={() => setAddUserModalOpen(false)} />
