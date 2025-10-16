@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import type { Computer } from '../types';
+// FIX: Update type import path for consistency
+import type { Computer } from '../types/types';
 import { useApp } from '../contexts/AppContext';
 import BookingCalendar from './BookingCalendar';
 import ComputerCard from './ComputerCard';

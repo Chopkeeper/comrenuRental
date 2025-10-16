@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { AppProvider, useApp } from './contexts/AppContext';
 import AdminView from './views/AdminView';
