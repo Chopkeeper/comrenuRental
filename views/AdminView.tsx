@@ -6,12 +6,13 @@ import { UserIcon } from '../components/icons/UserIcon';
 import { ComputerIcon } from '../components/icons/ComputerIcon';
 import { CheckIcon } from '../components/icons/CheckIcon';
 import { XIcon } from '../components/icons/XIcon';
-import type { Computer } from '../types/types';
+import type { Computer, User } from '../types/types';
 import { PencilIcon } from '../components/icons/PencilIcon';
 import { TrashIcon } from '../components/icons/TrashIcon';
 import ComputerForm from '../components/ComputerForm';
 import { DownloadIcon } from '../components/icons/DownloadIcon';
 import { UploadIcon } from '../components/icons/UploadIcon';
+import { KeyIcon } from '../components/icons/KeyIcon';
 
 
 const AddUserForm: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -208,12 +209,23 @@ const ManageComputers: React.FC = () => {
 };
 
 const ManageUsers: React.FC = () => {
-    const { users, deleteUser, currentUser } = useApp();
+    const { users, deleteUser, currentUser, resetUserPassword } = useApp();
+    const [passwordResetInfo, setPasswordResetInfo] = useState<{ userName: string, tempPass: string } | null>(null);
+    const [userToReset, setUserToReset] = useState<User | null>(null);
 
     const handleDelete = (userId: string, userName: string) => {
         if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้ "${userName}"? การกระทำนี้ไม่สามารถย้อนกลับได้`)) {
             deleteUser(userId);
         }
+    };
+
+    const handleResetPassword = async () => {
+        if (!userToReset) return;
+        const tempPass = await resetUserPassword(userToReset.id);
+        if (tempPass) {
+            setPasswordResetInfo({ userName: userToReset.name, tempPass });
+        }
+        setUserToReset(null); // Close confirmation modal
     };
 
     if (users.length <= 1 && users.find(u => u.id === currentUser?.id)) {
@@ -226,6 +238,7 @@ const ManageUsers: React.FC = () => {
     }
 
     return (
+        <>
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg">
             <h3 className="text-xl font-bold text-slate-800 mb-4">จัดการผู้ใช้ ({users.length})</h3>
             <div className="overflow-x-auto">
@@ -250,13 +263,22 @@ const ManageUsers: React.FC = () => {
                                 </td>
                                 <td className="p-2 text-right">
                                     {user.id !== currentUser?.id ? (
-                                        <button 
-                                            onClick={() => handleDelete(user.id, user.name)} 
-                                            className="p-2 text-red-600 hover:bg-red-100 rounded-full transition-colors" 
-                                            title="ลบผู้ใช้"
-                                        >
-                                            <TrashIcon className="h-5 w-5"/>
-                                        </button>
+                                        <div className="flex justify-end items-center gap-2">
+                                            <button
+                                                onClick={() => setUserToReset(user)}
+                                                className="p-2 text-yellow-600 hover:bg-yellow-100 rounded-full transition-colors"
+                                                title="รีเซ็ตรหัสผ่าน"
+                                            >
+                                                <KeyIcon className="h-5 w-5"/>
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(user.id, user.name)}
+                                                className="p-2 text-red-600 hover:bg-red-100 rounded-full transition-colors"
+                                                title="ลบผู้ใช้"
+                                            >
+                                                <TrashIcon className="h-5 w-5"/>
+                                            </button>
+                                        </div>
                                     ) : (
                                         <span className="text-xs text-slate-400 italic">บัญชีปัจจุบัน</span>
                                     )}
@@ -267,19 +289,64 @@ const ManageUsers: React.FC = () => {
                 </table>
             </div>
         </div>
+        <Modal isOpen={!!userToReset} onClose={() => setUserToReset(null)}>
+            <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900">ยืนยันการรีเซ็ตรหัสผ่าน</h3>
+                <p className="mt-2 text-sm text-gray-600">
+                    คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตรหัสผ่านสำหรับผู้ใช้ <span className="font-bold">{userToReset?.name}</span>?
+                </p>
+                <div className="mt-4 flex justify-center gap-4">
+                    <button onClick={() => setUserToReset(null)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">ยกเลิก</button>
+                    <button onClick={handleResetPassword} className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700">ยืนยัน</button>
+                </div>
+            </div>
+        </Modal>
+
+        <Modal isOpen={!!passwordResetInfo} onClose={() => setPasswordResetInfo(null)}>
+            <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900">รีเซ็ตรหัสผ่านสำเร็จ</h3>
+                <p className="mt-2 text-sm text-gray-600">
+                    รหัสผ่านสำหรับ <span className="font-bold">{passwordResetInfo?.userName}</span> ถูกเปลี่ยนแล้ว
+                </p>
+                <p className="mt-2 text-sm text-gray-600">รหัสผ่านชั่วคราวใหม่คือ:</p>
+                <div className="my-4 p-3 bg-slate-100 rounded-md text-lg font-mono font-bold tracking-widest">
+                    {passwordResetInfo?.tempPass}
+                </div>
+                <p className="text-xs text-red-600">กรุณาส่งรหัสผ่านนี้ให้ผู้ใช้อย่างปลอดภัยและแนะนำให้พวกเขาเปลี่ยนทันทีหลังจากเข้าสู่ระบบ</p>
+                <div className="mt-4 flex justify-center">
+                    <button onClick={() => setPasswordResetInfo(null)} className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">ปิด</button>
+                </div>
+            </div>
+        </Modal>
+        </>
     );
 };
 
 
 const AdminView: React.FC = () => {
-    const { importData } = useApp();
+    const { users, currentUser, deleteAllUsers } = useApp();
     const [isAddUserModalOpen, setAddUserModalOpen] = useState(false);
     const [isAddComputerModalOpen, setAddComputerModalOpen] = useState(false);
+    const [isDeleteAllModalOpen, setDeleteAllModalOpen] = useState(false);
+    const [deleteConfirmText, setDeleteConfirmText] = useState('');
     
     // NOTE: Import/Export is disabled when using a central database.
     const handleImportExportDisabled = () => {
         alert("ฟังก์ชันนำเข้า/ส่งออกข้อมูลไม่สามารถใช้งานได้เมื่อเชื่อมต่อกับฐานข้อมูลกลาง");
     };
+
+    const handleDeleteAllUsers = async () => {
+        if (deleteConfirmText === 'DELETE') {
+            const success = await deleteAllUsers();
+            if(success) {
+                alert('ลบผู้ใช้ที่ไม่ใช่ผู้ดูแลระบบทั้งหมดเรียบร้อยแล้ว');
+            }
+            setDeleteAllModalOpen(false);
+            setDeleteConfirmText('');
+        }
+    };
+
+    const nonAdminUsersCount = users.filter(u => u.role !== 'admin').length;
 
     return (
         <div className="space-y-6">
@@ -294,13 +361,14 @@ const AdminView: React.FC = () => {
                         <ComputerIcon className="h-5 w-5" />
                         เพิ่มคอมพิวเตอร์
                     </button>
-                     <button onClick={handleImportExportDisabled} className="flex items-center gap-2 px-4 py-2 bg-slate-400 text-white rounded-md shadow cursor-not-allowed" title="ฟังก์ชันนี้ถูกปิดใช้งานเมื่อใช้ฐานข้อมูลกลาง">
-                        <UploadIcon className="h-5 w-5" />
-                        นำเข้าข้อมูล
-                    </button>
-                    <button onClick={handleImportExportDisabled} className="flex items-center gap-2 px-4 py-2 bg-slate-400 text-white rounded-md shadow cursor-not-allowed" title="ฟังก์ชันนี้ถูกปิดใช้งานเมื่อใช้ฐานข้อมูลกลาง">
-                        <DownloadIcon className="h-5 w-5" />
-                        ส่งออกข้อมูล
+                    <button
+                        onClick={() => setDeleteAllModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md shadow hover:bg-red-700 transition disabled:bg-red-300 disabled:cursor-not-allowed"
+                        disabled={nonAdminUsersCount === 0}
+                        title={nonAdminUsersCount === 0 ? "ไม่มีผู้ใช้ให้ลบ" : "ลบผู้ใช้ทั้งหมด (ยกเว้นผู้ดูแลระบบ)"}
+                    >
+                        <TrashIcon className="h-5 w-5" />
+                        ลบผู้ใช้ทั้งหมด
                     </button>
                 </div>
             </div>
@@ -319,6 +387,42 @@ const AdminView: React.FC = () => {
             </Modal>
             <Modal isOpen={isAddComputerModalOpen} onClose={() => setAddComputerModalOpen(false)}>
                 <ComputerForm onClose={() => setAddComputerModalOpen(false)} />
+            </Modal>
+            <Modal isOpen={isDeleteAllModalOpen} onClose={() => setDeleteAllModalOpen(false)}>
+                <div className="space-y-4">
+                    <h3 className="text-xl font-bold text-red-700">คำเตือน: การดำเนินการนี้ไม่สามารถย้อนกลับได้</h3>
+                    <p className="text-slate-600">
+                        คุณกำลังจะลบผู้ใช้ที่ไม่ใช่ผู้ดูแลระบบทั้งหมดจำนวน <span className="font-bold">{nonAdminUsersCount}</span> คน
+                        การดำเนินการนี้จะลบการจองทั้งหมดที่เกี่ยวข้องกับผู้ใช้เหล่านี้ด้วย
+                    </p>
+                    <p className="text-slate-600">
+                        เพื่อยืนยัน โปรดพิมพ์ <code className="bg-slate-200 text-red-700 font-bold px-1 rounded">DELETE</code> ลงในช่องด้านล่าง
+                    </p>
+                    <div>
+                        <label htmlFor="deleteConfirm" className="sr-only">Confirm Deletion</label>
+                        <input
+                            type="text"
+                            id="deleteConfirm"
+                            value={deleteConfirmText}
+                            onChange={(e) => setDeleteConfirmText(e.target.value)}
+                            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm"
+                            autoComplete="off"
+                        />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <button type="button" onClick={() => { setDeleteAllModalOpen(false); setDeleteConfirmText(''); }} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
+                            ยกเลิก
+                        </button>
+                        <button 
+                            type="button" 
+                            onClick={handleDeleteAllUsers}
+                            disabled={deleteConfirmText !== 'DELETE'}
+                            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed"
+                        >
+                            ยืนยันการลบทั้งหมด
+                        </button>
+                    </div>
+                </div>
             </Modal>
         </div>
     );

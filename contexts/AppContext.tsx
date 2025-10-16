@@ -40,6 +40,8 @@ interface AppContextType {
     findUserById: (id: string) => User | undefined;
     changePassword: (userId: string, oldPassword?: string, newPassword?: string) => Promise<boolean>;
     importData: (jsonString: string) => boolean;
+    resetUserPassword: (userId: string) => Promise<string | null>;
+    deleteAllUsers: () => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -354,6 +356,46 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
        return false;
     };
 
+    const resetUserPassword = async (userId: string): Promise<string | null> => {
+        try {
+            const response = await fetch(`${API_URL}/users/${userId}/reset-password`, {
+                method: 'PUT',
+                headers: getAuthHeader(),
+            });
+            if (response.ok) {
+                const data = await response.json();
+                return data.temporaryPassword;
+            }
+            const errorData = await response.json();
+            alert(`รีเซ็ตรหัสผ่านไม่สำเร็จ: ${errorData.msg || 'เกิดข้อผิดพลาด'}`);
+            return null;
+        } catch (error) {
+            console.error("Reset password failed:", error);
+            alert('รีเซ็ตรหัสผ่านไม่สำเร็จ: เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            return null;
+        }
+    };
+    
+    const deleteAllUsers = async (): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_URL}/users/all`, {
+                method: 'DELETE',
+                headers: getAuthHeader(),
+            });
+            if (response.ok) {
+                fetchData(); // Refresh data after deletion
+                return true;
+            }
+            const errorData = await response.json();
+            alert(`ลบผู้ใช้ทั้งหมดไม่สำเร็จ: ${errorData.msg || 'เกิดข้อผิดพลาด'}`);
+            return false;
+        } catch (error) {
+            console.error("Delete all users failed:", error);
+            alert('ลบผู้ใช้ทั้งหมดไม่สำเร็จ: เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            return false;
+        }
+    };
+
     const value = {
         currentUser,
         users,
@@ -375,6 +417,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         findUserById,
         changePassword,
         importData,
+        resetUserPassword,
+        deleteAllUsers,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
