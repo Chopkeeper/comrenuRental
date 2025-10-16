@@ -4,6 +4,7 @@ import AdminView from './views/AdminView';
 import UserView from './views/UserView';
 import Header from './components/Header';
 import LoginView from './views/LoginView';
+import Footer from './components/Footer';
 
 const ServerStatusOverlay: React.FC = () => {
     return (
@@ -62,11 +63,12 @@ const AppContent: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-100">
+        <div className="min-h-screen bg-slate-100 flex flex-col">
             <Header />
-            <main className="p-4 sm:p-6 md:p-8">
+            <main className="p-4 sm:p-6 md:p-8 flex-grow">
                 {currentUser?.role === 'admin' ? <AdminView /> : <UserView />}
             </main>
+            <Footer />
         </div>
     );
 };
