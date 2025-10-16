@@ -10,8 +10,17 @@ const router = express.Router();
 // @access  Private
 router.get('/', protect, async (req, res) => {
     try {
-        // Admins see all, users see their own
-        const filter = req.user.role === 'admin' ? {} : { userId: req.user.id };
+        let filter = {};
+        // Admins see all bookings
+        if (req.user.role !== 'admin') {
+            // Users see their own bookings (any status) AND all other confirmed bookings for calendar view
+            filter = {
+                $or: [
+                    { userId: req.user.id },
+                    { status: 'confirmed' }
+                ]
+            };
+        }
         const bookings = await Booking.find(filter);
         res.json(bookings);
     } catch (error) {

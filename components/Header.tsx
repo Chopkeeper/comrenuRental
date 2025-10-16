@@ -13,7 +13,7 @@ const Header: React.FC = () => {
             <header className="bg-white shadow-md">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
-                        <h1 className="text-2xl font-bold text-slate-800">ระบบยืมคอมพิวเตอร์ พัฒนาโดย นายนิเทศก์ บัวสาย</h1>
+                        <h1 className="text-2xl font-bold text-slate-800">เช่ายืมคอมพิวเตอร์</h1>
                         {currentUser && (
                             <div className="flex items-center gap-4">
                                 <span className="text-slate-600">ยินดีต้อนรับ, <span className="font-semibold">{currentUser.name}</span>!</span>
