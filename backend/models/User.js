@@ -1,1 +1,57 @@
-full contents of backend/models/User.js
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+
+const UserSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: [true, 'Please add a name'],
+        unique: true
+    },
+    password: {
+        type: String,
+        required: [true, 'Please add a password'],
+        minlength: 6,
+        select: false // Don't return password by default
+    },
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user'
+    },
+    position: {
+        type: String,
+        default: ''
+    },
+    department: {
+        type: String,
+        default: ''
+    },
+    employeeType: {
+        type: String,
+        default: ''
+    }
+}, {
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+// Rename _id to id
+UserSchema.virtual('id').get(function() {
+    return this._id.toHexString();
+});
+
+// Encrypt password using bcrypt
+UserSchema.pre('save', async function(next) {
+    if (!this.isModified('password')) {
+        next();
+    }
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+});
+
+// Match user entered password to hashed password in database
+UserSchema.methods.matchPassword = async function(enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+export default mongoose.model('User', UserSchema);

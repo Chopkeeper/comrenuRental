@@ -1,9 +1,11 @@
-
 export interface User {
   id: string;
   name:string;
   password?: string;
   role: 'admin' | 'user';
+  position?: string;
+  department?: string;
+  employeeType?: string;
 }
 
 export interface Computer {
