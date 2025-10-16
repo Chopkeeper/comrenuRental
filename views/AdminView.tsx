@@ -210,7 +210,7 @@ const ManageComputers: React.FC = () => {
 };
 
 const ManageUsers: React.FC = () => {
-    const { users, deleteUser, currentUser, resetUserPassword } = useApp();
+    const { users, deleteUser, currentUser, resetUserPassword, updateUserRole } = useApp();
     const [passwordResetInfo, setPasswordResetInfo] = useState<{ userName: string, tempPass: string } | null>(null);
     const [userToReset, setUserToReset] = useState<User | null>(null);
 
@@ -228,6 +228,17 @@ const ManageUsers: React.FC = () => {
         }
         setUserToReset(null); // Close confirmation modal
     };
+
+    const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>, user: User) => {
+        const newRole = e.target.value as 'admin' | 'user';
+        if (window.confirm(`คุณแน่ใจหรือไม่ว่าต้องการเปลี่ยนบทบาทของ ${user.name} เป็น ${newRole}?`)) {
+            updateUserRole(user.id, newRole);
+        } else {
+            // Revert the select box if the user cancels
+            e.target.value = user.role;
+        }
+    };
+
 
     if (users.length <= 1 && users.find(u => u.id === currentUser?.id)) {
          return (
@@ -256,11 +267,22 @@ const ManageUsers: React.FC = () => {
                             <tr key={user.id} className="border-b hover:bg-slate-50">
                                 <td className="p-2">{user.name}</td>
                                 <td className="p-2 capitalize">
-                                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                                        user.role === 'admin' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-800'
-                                    }`}>
-                                        {user.role}
-                                    </span>
+                                     {user.id !== currentUser?.id ? (
+                                        <select
+                                            value={user.role}
+                                            onChange={(e) => handleRoleChange(e, user)}
+                                            className="block w-full p-1 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white"
+                                        >
+                                            <option value="user">User</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    ) : (
+                                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                            user.role === 'admin' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-800'
+                                        }`}>
+                                            {user.role}
+                                        </span>
+                                    )}
                                 </td>
                                 <td className="p-2 text-right">
                                     {user.id !== currentUser?.id ? (

@@ -17,6 +17,40 @@ router.get('/', protect, admin, async (req, res) => {
     }
 });
 
+// @desc    Update a user's role
+// @route   PUT /api/users/:id/role
+// @access  Private/Admin
+router.put('/:id/role', protect, admin, async (req, res) => {
+    try {
+        const { role } = req.body;
+
+        if (role !== 'admin' && role !== 'user') {
+            return res.status(400).json({ msg: 'บทบาทไม่ถูกต้อง' });
+        }
+
+        // Prevent admin from changing their own role
+        if (req.params.id === req.user.id) {
+            return res.status(400).json({ msg: 'ผู้ดูแลระบบไม่สามารถเปลี่ยนบทบาทของตนเองได้' });
+        }
+
+        const user = await User.findById(req.params.id);
+
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+
+        user.role = role;
+        await user.save();
+
+        res.json(user);
+
+    } catch (error) {
+        console.error(error.message);
+        res.status(500).json({ msg: 'Server Error' });
+    }
+});
+
+
 // @desc    Reset a user's password
 // @route   PUT /api/users/:id/reset-password
 // @access  Private/Admin

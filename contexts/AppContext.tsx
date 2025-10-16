@@ -42,6 +42,7 @@ interface AppContextType {
     importData: (jsonString: string) => boolean;
     resetUserPassword: (userId: string) => Promise<string | null>;
     deleteAllUsers: () => Promise<boolean>;
+    updateUserRole: (userId: string, role: 'admin' | 'user') => Promise<boolean>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -399,6 +400,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     };
 
+    const updateUserRole = async (userId: string, role: 'admin' | 'user'): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_URL}/users/${userId}/role`, {
+                method: 'PUT',
+                headers: getAuthHeader(),
+                body: JSON.stringify({ role }),
+            });
+            if (response.ok) {
+                fetchData();
+                return true;
+            }
+            const errorData = await response.json();
+            alert(`อัปเดตบทบาทไม่สำเร็จ: ${errorData.msg || 'เกิดข้อผิดพลาด'}`);
+            return false;
+        } catch (error) {
+            console.error("Update user role failed:", error);
+            alert('อัปเดตบทบาทไม่สำเร็จ: เกิดข้อผิดพลาดในการเชื่อมต่อ');
+            return false;
+        }
+    };
+
+
     const value = {
         currentUser,
         users,
@@ -422,6 +445,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         importData,
         resetUserPassword,
         deleteAllUsers,
+        updateUserRole,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
