@@ -49,9 +49,20 @@ const LoginView: React.FC = () => {
                         {isRegistering ? 'สร้างบัญชีใหม่' : 'ระบบเช่ายืมคอมพิวเตอร์'}
                     </h2>
                     <p className="text-sm text-slate-500 mt-2">
-                        {isRegistering ? 'ผู้ใช้คนแรกที่สมัครจะได้รับสิทธิ์ผู้ดูแลระบบ' : 'กรุณาเข้าสู่ระบบเพื่อใช้งานต่อ'}
+                        {isRegistering ? 'สร้างบัญชีผู้ใช้ใหม่' : 'กรุณาเข้าสู่ระบบเพื่อใช้งานต่อ'}
                     </p>
                 </div>
+
+                {!isRegistering && (
+                    <div className="bg-blue-50 border-l-4 border-blue-400 text-blue-800 p-4 mb-6 rounded-r-lg" role="alert">
+                        <h3 className="font-bold">คำแนะนำสำหรับการตั้งค่าครั้งแรก</h3>
+                        <p className="text-sm">
+                            เข้าสู่ระบบด้วยชื่อผู้ใช้: <code className="font-mono bg-blue-100 px-1 py-0.5 rounded">admin</code> <br/>
+                            และรหัสผ่าน: <code className="font-mono bg-blue-100 px-1 py-0.5 rounded">admin123</code>
+                        </p>
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit}>
                     {error && <p className="text-red-500 text-xs text-center mb-4 bg-red-50 p-2 rounded-md">{error}</p>}
                     <div className="mb-4">

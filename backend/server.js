@@ -16,6 +16,17 @@ import User from './models/User.js';
 // Load env vars
 dotenv.config();
 
+// Validate environment variables
+if (!process.env.JWT_SECRET) {
+    console.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    console.error('!!! FATAL ERROR: JWT_SECRET is not defined in environment. !!!');
+    console.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    console.error('Please add JWT_SECRET to your .env file or environment variables.');
+    console.error('The application cannot start without it.');
+    console.error('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    process.exit(1);
+}
+
 // ES Module equivalents for __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

@@ -144,6 +144,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             });
 
             if (!response.ok) {
+                if (response.status >= 500) {
+                    alert('เกิดข้อผิดพลาดที่เซิร์ฟเวอร์ กรุณาตรวจสอบ Log หรือติดต่อผู้ดูแลระบบ');
+                }
                 return false;
             }
 
