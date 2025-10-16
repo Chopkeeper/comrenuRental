@@ -22,7 +22,8 @@ export const exportToCsv = (filename: string, data: any[]): void => {
     ];
 
     const csvString = csvRows.join('\n');
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    // Prepend a BOM to ensure Excel opens with UTF-8 encoding for Thai characters
+    const blob = new Blob(['\uFEFF' + csvString], { type: 'text/csv;charset=utf-8;' });
 
     const link = document.createElement('a');
     if (link.download !== undefined) {
